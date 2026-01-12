@@ -3,6 +3,15 @@
 # Скрипт резервного копирования с использованием restic
 # Предназначен для запуска через cron на удалённом сервере
 
+# Явно задаём PATH для безопасности
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Проверка, что скрипт запущен от root
+if [[ $EUID -ne 0 ]]; then
+   echo "ОШИБКА: Этот скрипт должен быть запущен с правами root." >&2
+   exit 1
+fi
+
 # Путь к лог-файлу
 LOG_FILE="/var/log/restic_backup.log"
 
@@ -31,11 +40,19 @@ export RESTIC_PASSWORD_FILE="/path/to/restic/password/file"
 # export RESTIC_SFTP_PORT="22"
 
 # Пути для резервного копирования (укажите свои директории)
-BACKUP_PATHS=(
-    "/home"
-    "/etc"
-    "/var/www"
-)
+# Можно переопределить через переменную окружения BACKUP_PATHS_ENV
+# Формат: "/путь1 /путь2 /путь3"
+if [[ -n "${BACKUP_PATHS_ENV}" ]]; then
+    # Преобразуем строку в массив
+    read -ra BACKUP_PATHS <<< "${BACKUP_PATHS_ENV}"
+else
+    # Значения по умолчанию
+    BACKUP_PATHS=(
+        "/home"
+        "/etc"
+        "/var/www"
+    )
+fi
 
 # Исключения (опционально)
 EXCLUDE_FILE="/path/to/exclude/file.txt"  # файл с шаблонами исключений, если нужен
@@ -65,18 +82,18 @@ fi
 # Выполнение резервного копирования
 log "Начало резервного копирования..."
 
-# Сбор аргументов для команды backup
-BACKUP_CMD="restic backup"
+# Сбор аргументов для команды backup с использованием массива для безопасности
+BACKUP_CMD_ARGS=("backup")
 for path in "${BACKUP_PATHS[@]}"; do
-    BACKUP_CMD+=" \"$path\""
+    BACKUP_CMD_ARGS+=("$path")
 done
 
 if [[ -f "$EXCLUDE_FILE" ]]; then
-    BACKUP_CMD+=" --exclude-file=\"$EXCLUDE_FILE\""
+    BACKUP_CMD_ARGS+=("--exclude-file=$EXCLUDE_FILE")
 fi
 
 # Выполнение команды
-if eval "$BACKUP_CMD" 2>&1 | tee -a "$LOG_FILE"; then
+if restic "${BACKUP_CMD_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"; then
     log "Резервное копирование успешно завершено."
 else
     log "ОШИБКА: резервное копирование завершилось с ошибкой."
