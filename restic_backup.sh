@@ -49,7 +49,7 @@ run_restic_backup() {
     backup_cmd_args+=("--pack-size=${RESTIC_PACK_SIZE}")
     
     # Выполнение команды
-    if restic "${backup_cmd_args[@]}" 2>&1; then
+    if restic "${backup_cmd_args[@]}" --one-file-system 2>&1; then
         log "Резервное копирование успешно завершено."
     else
         log "ОШИБКА: резервное копирование завершилось с ошибкой."
