@@ -1,77 +1,73 @@
 #!/bin/bash
 
-# Скрипт резервного копирования с использованием restic
+set -e
+set -o pipefail
 
-# Проверка, что скрипт запущен от root
-if [[ $EUID -ne 0 ]]; then
-   echo "ОШИБКА: Этот скрипт должен быть запущен с правами root." >&2
-   exit 1
-fi
-
-# Путь к лог-файлу
-LOG_FILE="/var/log/restic_backup.log"
-
-# Функция для логирования
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') $1" | tee -a "$LOG_FILE"
-}
-
-# Проверка наличия restic
-if ! command -v restic &> /dev/null; then
-    log "ОШИБКА: restic не найден. Установите restic перед запуском скрипта."
-    exit 1
-fi
-
-# Пути для резервного копирования
-if [[ -n "${BACKUP_PATHS_ENV}" ]]; then
-    # Преобразуем строку в массив
-    read -ra BACKUP_PATHS <<< "${BACKUP_PATHS_ENV}"
-else
-    # Значения по умолчанию
-    BACKUP_PATHS=(
-        "/"
-    )
-fi
-
-# Проверка настроек репозитория
-if [[ -z "$RESTIC_REPOSITORY" ]]; then
-    log "ОШИБКА: переменная RESTIC_REPOSITORY не установлена."
-    exit 1
-fi
-
-if [[ -z "$RESTIC_PASSWORD" ]]; then
-    log "ОШИБКА: не задан пароль репозитория."
-    exit 1
-fi
-
-# Инициализация репозитория, если он ещё не создан
-if ! restic snapshots &> /dev/null; then
-    log "Репозиторий не инициализирован или недоступен. Попытка инициализации..."
-    if restic init; then
-        log "Репозиторий успешно инициализирован."
-    else
-        log "ОШИБКА: не удалось инициализировать репозиторий."
+# Функция для выполнения резервного копирования
+run_restic_backup() {
+    # Определяем BASE_DIR из main.sh через глобальную переменную или вычисляем
+    local base_dir="${BASE_DIR:-$(dirname "$(readlink -f "$0")")}"
+    
+    # Проверка наличия restic
+    if ! command -v restic &> /dev/null; then
+        echo "ОШИБКА: restic не найден. Установите restic перед запуском скрипта." >&2
         exit 1
     fi
-fi
+    
+    # Проверка настроек репозитория
+    if [[ -z "$RESTIC_REPOSITORY" ]]; then
+        echo "ОШИБКА: переменная RESTIC_REPOSITORY не установлена." >&2
+        exit 1
+    fi
+    
+    # Экспортируем переменные для restic
+    export RESTIC_REPOSITORY
+    export RESTIC_PASSWORD_FILE="${base_dir}/${RESTIC_PASSWORD_FILE}"
+    export RESTIC_CACHE_DIR="${base_dir}/${RESTIC_CACHE_DIR}"
+    
+    # Инициализация репозитория, если он ещё не создан
+    if ! restic snapshots &> /dev/null; then
+        echo "Репозиторий не инициализирован или недоступен. Попытка инициализации..." >&2
+        if restic init; then
+            echo "Репозиторий успешно инициализирован." >&2
+        else
+            echo "ОШИБКА: не удалось инициализировать репозиторий." >&2
+            exit 1
+        fi
+    fi
+    
+    echo "Начало резервного копирования..." >&2
+    
+    # Сбор аргументов для команды backup с использованием массива
+    local backup_cmd_args=("backup")
+    
+    # Добавляем пути для резервного копирования
+    read -ra backup_paths <<< "${BACKUP_PATHS}"
+    for path in "${backup_paths[@]}"; do
+        backup_cmd_args+=("$path")
+    done
+    
+    # Добавляем параметры из конфигурации
+    backup_cmd_args+=("--cache-dir=${base_dir}/${RESTIC_CACHE_DIR}")
+    
+    local exclude_file="${base_dir}/${EXCLUDE_FILE}"
+    if [[ -f "$exclude_file" ]]; then
+        backup_cmd_args+=("--exclude-file=${exclude_file}")
+    fi
+    
+    backup_cmd_args+=("--pack-size=${RESTIC_PACK_SIZE}")
+    
+    # Выполнение команды
+    if restic "${backup_cmd_args[@]}" 2>&1; then
+        echo "Резервное копирование успешно завершено." >&2
+    else
+        echo "ОШИБКА: резервное копирование завершилось с ошибкой." >&2
+        exit 1
+    fi
+}
 
-# Выполнение резервного копирования
-log "Начало резервного копирования..."
-
-# Сбор аргументов для команды backup с использованием массива
-BACKUP_CMD_ARGS=("backup")
-for path in "${BACKUP_PATHS[@]}"; do
-    BACKUP_CMD_ARGS+=("$path")
-done
-
-if [[ -f "$EXCLUDE_FILE" ]]; then
-    BACKUP_CMD_ARGS+=("--exclude-file=$EXCLUDE_FILE")
-fi
-
-# Выполнение команды
-if restic "${BACKUP_CMD_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"; then
-    log "Резервное копирование успешно завершено."
-else
-    log "ОШИБКА: резервное копирование завершилось с ошибкой."
+# Если скрипт запущен напрямую, а не через source
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    echo "Этот скрипт предназначен для подключения через source, а не для прямого выполнения." >&2
     exit 1
 fi
