@@ -40,11 +40,10 @@ run_restic_backup() {
     done
     
     # Добавляем параметры из конфигурации
-    backup_cmd_args+=("--cache-dir=${base_dir}/${RESTIC_CACHE_DIR}")
+    backup_cmd_args+=("--cache-dir=${RESTIC_CACHE_DIR}")
     
-    local exclude_file="${base_dir}/${EXCLUDE_FILE}"
-    if [[ -f "$exclude_file" ]]; then
-        backup_cmd_args+=("--exclude-file=${exclude_file}")
+    if [[ -f "${ABS_EXCLUDE_FILE}" ]]; then
+        backup_cmd_args+=("--exclude-file=${ABS_EXCLUDE_FILE}")
     fi
     
     backup_cmd_args+=("--pack-size=${RESTIC_PACK_SIZE}")

@@ -14,7 +14,7 @@ source "${BASE_DIR}/restic_forget.sh"
 # Общая функция логирования
 log() {
     local message="$1"
-    local log_file="${BASE_DIR}/${LOG_FILE}"
+    local log_file="${ABS_LOG_FILE}"
     echo "$(date '+%Y-%m-%d %H:%M:%S') $message" | tee -a "$log_file"
 }
 
@@ -28,10 +28,16 @@ fi
 main() {
     log "Запуск системы бэкапа"
     
+    # Формируем абсолютные пути
+    export ABS_RESTIC_PASSWORD_FILE="${BASE_DIR}/${RESTIC_PASSWORD_FILE}"
+    export ABS_RESTIC_CACHE_DIR="${BASE_DIR}/${RESTIC_CACHE_DIR}"
+    export ABS_EXCLUDE_FILE="${BASE_DIR}/${EXCLUDE_FILE}"
+    export ABS_LOG_FILE="${BASE_DIR}/${LOG_FILE}"
+    
     # Экспортируем переменные для restic
     export RESTIC_REPOSITORY="${RESTIC_REPOSITORY}"
-    export RESTIC_PASSWORD_FILE="${BASE_DIR}/${RESTIC_PASSWORD_FILE}"
-    export RESTIC_CACHE_DIR="${BASE_DIR}/${RESTIC_CACHE_DIR}"
+    export RESTIC_PASSWORD_FILE="${ABS_RESTIC_PASSWORD_FILE}"
+    export RESTIC_CACHE_DIR="${ABS_RESTIC_CACHE_DIR}"
     
     # Запуск бэкапа
     run_restic_backup

@@ -5,9 +5,6 @@ set -o pipefail
 
 # Функция для очистки старых снимков
 run_restic_forget() {
-    # Определяем BASE_DIR из main.sh через глобальную переменную или вычисляем
-    local base_dir="${BASE_DIR:-$(dirname "$(readlink -f "$0")")}"
-    
     # Проверка наличия restic
     if ! command -v restic &> /dev/null; then
         echo "ОШИБКА: restic не найден. Установите restic перед запуском скрипта." >&2
@@ -33,7 +30,7 @@ run_restic_forget() {
     
     # Добавляем параметры из конфигурации
     forget_cmd_args+=("--prune")
-    forget_cmd_args+=("--cache-dir=${base_dir}/${RESTIC_CACHE_DIR}")
+    forget_cmd_args+=("--cache-dir=${RESTIC_CACHE_DIR}")
     forget_cmd_args+=("--pack-size=${RESTIC_PACK_SIZE}")
     
     # Выполнение команды
