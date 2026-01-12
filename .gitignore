@@ -8,3 +8,6 @@ init.conf
 
 # Кеш-директория
 cache/
+
+# Промпт
+*prompt*
