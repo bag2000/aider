@@ -33,18 +33,12 @@ run_restic_forget() {
     forget_cmd_args+=("--cache-dir=${RESTIC_CACHE_DIR}")
     forget_cmd_args+=("--pack-size=${RESTIC_PACK_SIZE}")
     
-    # Выполнение команды с сохранением вывода
-    local restic_output
+    # Объявление переменной для сохранения exit статуса
     local restic_exit_code
-    
-    # Запускаем restic, захватываем stdout и stderr, сохраняем код возврата
-    restic_output=$(restic "${forget_cmd_args[@]}" 2>&1)
-    restic_exit_code=$?
-    
-    # Записываем вывод в лог
-    while IFS= read -r line; do
-        log "restic: $line"
-    done <<< "$restic_output"
+
+    # Запускаем restic
+    restic "${forget_cmd_args[@]}" 2>&1 | tee -a "$ABS_LOG_FILE"
+    restic_exit_code=${PIPESTATUS[0]}
     
     # Проверяем код возврата
     if [[ $restic_exit_code -eq 0 ]]; then
