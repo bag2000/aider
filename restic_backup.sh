@@ -48,11 +48,24 @@ run_restic_backup() {
     
     backup_cmd_args+=("--pack-size=${RESTIC_PACK_SIZE}")
     
-    # Выполнение команды
-    if restic "${backup_cmd_args[@]}" --one-file-system 2>&1; then
+    # Выполнение команды с сохранением вывода
+    local restic_output
+    local restic_exit_code
+    
+    # Запускаем restic, захватываем stdout и stderr, сохраняем код возврата
+    restic_output=$(restic "${backup_cmd_args[@]}" --one-file-system 2>&1)
+    restic_exit_code=$?
+    
+    # Записываем вывод в лог
+    while IFS= read -r line; do
+        log "restic: $line"
+    done <<< "$restic_output"
+    
+    # Проверяем код возврата
+    if [[ $restic_exit_code -eq 0 ]]; then
         log "Резервное копирование успешно завершено."
     else
-        log "ОШИБКА: резервное копирование завершилось с ошибкой."
+        log "ОШИБКА: резервное копирование завершилось с ошибкой (код: $restic_exit_code)."
         exit 1
     fi
 }

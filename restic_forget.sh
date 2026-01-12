@@ -33,11 +33,24 @@ run_restic_forget() {
     forget_cmd_args+=("--cache-dir=${RESTIC_CACHE_DIR}")
     forget_cmd_args+=("--pack-size=${RESTIC_PACK_SIZE}")
     
-    # Выполнение команды
-    if restic "${forget_cmd_args[@]}" 2>&1; then
+    # Выполнение команды с сохранением вывода
+    local restic_output
+    local restic_exit_code
+    
+    # Запускаем restic, захватываем stdout и stderr, сохраняем код возврата
+    restic_output=$(restic "${forget_cmd_args[@]}" 2>&1)
+    restic_exit_code=$?
+    
+    # Записываем вывод в лог
+    while IFS= read -r line; do
+        log "restic: $line"
+    done <<< "$restic_output"
+    
+    # Проверяем код возврата
+    if [[ $restic_exit_code -eq 0 ]]; then
         log "Очистка старых снимков успешно завершена."
     else
-        log "ОШИБКА: очистка старых снимков завершилась с ошибкой."
+        log "ОШИБКА: очистка старых снимков завершилась с ошибкой (код: $restic_exit_code)."
         exit 1
     fi
 }
