@@ -4,10 +4,7 @@ set -e
 set -o pipefail
 
 # Функция для выполнения резервного копирования
-run_restic_backup() {
-    # Определяем BASE_DIR из main.sh через глобальную переменную или вычисляем
-    local base_dir="${BASE_DIR:-$(dirname "$(readlink -f "$0")")}"
-    
+run_restic_backup() {   
     # Проверка наличия restic
     if ! command -v restic &> /dev/null; then
         echo "ОШИБКА: restic не найден. Установите restic перед запуском скрипта." >&2
@@ -19,11 +16,6 @@ run_restic_backup() {
         echo "ОШИБКА: переменная RESTIC_REPOSITORY не установлена." >&2
         exit 1
     fi
-    
-    # Экспортируем переменные для restic
-    export RESTIC_REPOSITORY
-    export RESTIC_PASSWORD_FILE="${base_dir}/${RESTIC_PASSWORD_FILE}"
-    export RESTIC_CACHE_DIR="${base_dir}/${RESTIC_CACHE_DIR}"
     
     # Инициализация репозитория, если он ещё не создан
     if ! restic snapshots &> /dev/null; then

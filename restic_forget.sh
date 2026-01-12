@@ -20,11 +20,6 @@ run_restic_forget() {
         exit 1
     fi
     
-    # Экспортируем переменные для restic
-    export RESTIC_REPOSITORY
-    export RESTIC_PASSWORD_FILE="${base_dir}/${RESTIC_PASSWORD_FILE}"
-    export RESTIC_CACHE_DIR="${base_dir}/${RESTIC_CACHE_DIR}"
-    
     echo "Начало очистки старых снимков..." >&2
     
     # Сбор аргументов для команды forget с использованием массива
