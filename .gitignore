@@ -1,1 +1,10 @@
 .aider*
+# Конфигурация и секреты
+init.conf
+.restic_pass
+
+# Логи
+*.log
+
+# Кеш-директория
+cache/
