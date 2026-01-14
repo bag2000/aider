@@ -10,6 +10,7 @@ def add_check(
     grace: int,
     channels: str,
     base_url: str,
+    slug: str = None,
 ) -> dict:
     """
     Create Healthchecks check if it does not exist.
@@ -20,9 +21,12 @@ def add_check(
         "Content-Type": "application/json",
     }
 
+    # Если slug не указан, используем name
+    effective_slug = slug if slug is not None else name
+
     payload = {
         "name": name,
-        "slug": name,
+        "slug": effective_slug,
         "tags": tags,
         "timeout": timeout,
         "grace": grace,
@@ -32,8 +36,8 @@ def add_check(
     with requests.Session() as session:
         session.headers.update(headers)
 
-        # check existence
-        response = session.get(base_url, params={"slug": name}, timeout=10)
+        # check existence по slug
+        response = session.get(base_url, params={"slug": effective_slug}, timeout=10)
         response.raise_for_status()
         checks = response.json().get("checks", [])
 

@@ -81,6 +81,28 @@ def get_enabled_db_backup_tasks():
     enabled_tasks = [task for task in tasks if task.get('enable') is True]
     return enabled_tasks
 
+def get_enabled_tasks():
+    """
+    Возвращает список задач из секции tasks, у которых enable: true.
+    
+    Returns:
+        list: Список словарей с настройками задач.
+    
+    Raises:
+        SystemExit: Если конфигурация не загружена или отсутствует секция tasks.
+    """
+    if _CONFIG is None:
+        load_config()
+    
+    tasks = _CONFIG.get('tasks')
+    if tasks is None:
+        print("Ошибка: В конфигурации отсутствует секция 'tasks'.", file=sys.stderr)
+        sys.exit(1)
+    
+    # Фильтруем только включённые задачи
+    enabled_tasks = [task for task in tasks if task.get('enable') is True]
+    return enabled_tasks
+
 # Если модуль запущен напрямую, демонстрируем его работу
 if __name__ == "__main__":
     print("Тестирование модуля config_manager.py")
