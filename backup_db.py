@@ -6,41 +6,11 @@
 """
 
 import sys
-import subprocess
 import pathlib
 import config_manager
 from hc import ping_start, ping_success, ping_fail
 from logger_manager import log
-
-# Удаляем стандартный логгер, так как используем Loguru
-# (уже настроен в logger_manager)
-
-
-def run_command(cmd, cwd=None, env=None):
-    """
-    Выполняет команду и возвращает (success, output).
-    """
-    try:
-        log.debug(f"Выполнение команды: {cmd}")
-        result = subprocess.run(
-            cmd,
-            shell=True,
-            check=True,
-            capture_output=True,
-            text=True,
-            cwd=cwd,
-            env=env
-        )
-        log.debug(f"Команда успешно выполнена: {result.stdout}")
-        return True, result.stdout
-    except subprocess.CalledProcessError as e:
-        error_msg = f"Ошибка выполнения команды: {e.stderr}"
-        log.error(error_msg)
-        return False, error_msg
-    except Exception as e:
-        error_msg = f"Неожиданная ошибка: {e}"
-        log.error(error_msg)
-        return False, error_msg
+from shell_manager import run_command_with_user, run_command_in_container, run_command
 
 
 def construct_ping_url(ping_base, server_name, task_slug):
@@ -112,26 +82,18 @@ def backup_task(task, general_settings):
             log.warning(f"Не удалось отправить fail ping: {e}")
         return False
 
+    # Формируем команду для выполнения
     # Если указан контейнер, выполняем команду внутри него
     if container_name:
         # Команда для выполнения внутри контейнера Docker
-        docker_cmd = f"docker exec {container_name} sh -c '{dump_cmd}'"
-        full_cmd = docker_cmd
-        log.info(f"Выполнение внутри контейнера: {container_name}")
+        # Сначала формируем полную команду с сжатием
+        full_cmd = f"{dump_cmd} | gzip -c > {output_path}"
+        success, output = run_command_in_container(container_name, full_cmd)
     else:
         # Локальное выполнение через sudo, если указан sys_user
-        if sys_user and sys_user != 'root':
-            sudo_cmd = f"sudo -u {sys_user} {dump_cmd}"
-        else:
-            sudo_cmd = dump_cmd
-        full_cmd = sudo_cmd
-        log.info(f"Локальное выполнение от пользователя: {sys_user or 'текущий'}")
-
-    # Добавляем сжатие и сохранение в файл
-    full_cmd = f"{full_cmd} | gzip -c > {output_path}"
-
-    # Выполняем команду
-    success, output = run_command(full_cmd)
+        # Формируем команду с сжатием
+        full_cmd = f"{dump_cmd} | gzip -c > {output_path}"
+        success, output = run_command_with_user(full_cmd, sys_user)
 
     if success:
         # Проверяем, что файл создан и не пустой
