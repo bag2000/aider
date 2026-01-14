@@ -1,10 +1,45 @@
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+logs/*.log
+!logs/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Configurations
+*.local
+*.env
+
+# Backups
+*.bak
+*.backup
+
+# Healthchecks
+*.pid
+
+# Aider
 .aider*
+
 # Конфигурация и секреты
 #init.conf
 .restic_pass
-
-# Логи
-*.log
 
 # Кеш-директория
 cache/
