@@ -58,7 +58,8 @@ def get_general_settings():
         'backup_path': general.get('backup_path'),
         'server_name': general.get('server_name'),
         'base_url': general.get('base_url', 'https://healthchecks.io/api/v1/checks/'),
-        'ping_base': general.get('ping_base', 'https://hc-ping.com')
+        'ping_base': general.get('ping_base', 'https://hc-ping.com'),
+        'channels': general.get('channels', '')
     }
 
 def get_enabled_tasks():

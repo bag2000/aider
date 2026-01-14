@@ -33,8 +33,10 @@ def init_checks(token: str, base_url_override: str = None):
         base_url = general.get('base_url', default_base)
 
     ping_base = general.get('ping_base', 'https://hc-ping.com')
+    channels = general.get('channels', '')
     print(f"Используемый base_url: {base_url}")
     print(f"Используемый ping_base: {ping_base}")
+    print(f"Используемые каналы: {channels if channels else '(пусто)'}")
 
     # Получаем включённые задачи
     try:
@@ -70,7 +72,7 @@ def init_checks(token: str, base_url_override: str = None):
                 tags=task_tag,
                 timeout=3600,
                 grace=60,
-                channels="",
+                channels=channels,
                 base_url=base_url,
                 slug=full_slug,
             )
