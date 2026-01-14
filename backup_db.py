@@ -41,6 +41,11 @@ def backup_task(task, general_settings):
 
     log.info(f"Начинаем резервное копирование задачи: {task_name}")
 
+    # Пропускаем задачи с db_type == "restic" (они выполняются отдельным скриптом)
+    if db_type == "restic":
+        log.info(f"Задача '{task_name}' пропущена: выполняется отдельным скриптом restic_check.py.")
+        return True  # Возвращаем True, чтобы не считать ошибкой
+
     # Проверка обязательных параметров
     # Для задач без output_file (например, restic check) не требуем output_file
     required_params = [task_slug, db_type, bin_path, backup_path]
@@ -72,10 +77,6 @@ def backup_task(task, general_settings):
         dump_cmd = f"{bin_path} {args}"
         if db_user:
             dump_cmd = f"mysql --user={db_user} --password='' {args}"
-    elif not db_type or db_type == "restic":
-        # Для задач, не связанных с БД (например, restic check)
-        # Используем bin_path и args напрямую
-        dump_cmd = f"{bin_path} {args}"
     else:
         log.error(f"Неизвестный тип БД: {db_type}")
         # Отправляем fail ping
