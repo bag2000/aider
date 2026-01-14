@@ -44,13 +44,28 @@ def run_command(cmd, cwd=None, env=None, shell=True, check_stderr=True):
             # Проверяем ключевые слова ошибок
             error_keywords = ['error', 'fatal', 'failed', 'неверный', 'ошибка', 'не удалось']
             stderr_lower = result.stderr.lower()
-            if any(keyword in stderr_lower for keyword in error_keywords):
+            
+            # Игнорируем определённые безобидные предупреждения
+            ignore_patterns = [
+                'could not change directory',
+                'отказано в доступе',
+                'permission denied'
+            ]
+            
+            # Проверяем, содержит ли stderr игнорируемые предупреждения
+            has_ignore_pattern = any(pattern in stderr_lower for pattern in ignore_patterns)
+            
+            if any(keyword in stderr_lower for keyword in error_keywords) and not has_ignore_pattern:
                 error_msg = f"Обнаружена ошибка в stderr: {result.stderr}"
                 log.error(error_msg)
                 return False, result.stderr
             else:
-                # Если stderr не содержит ошибок, это может быть предупреждение
-                log.warning(f"Команда выполнилась с предупреждением: {result.stderr}")
+                # Если stderr не содержит критических ошибок, это может быть предупреждение
+                # Но не логируем игнорируемые предупреждения
+                if not has_ignore_pattern:
+                    log.warning(f"Команда выполнилась с предупреждением: {result.stderr}")
+                else:
+                    log.debug(f"Игнорируемое предупреждение в stderr: {result.stderr}")
         
         log.debug(f"Команда успешно выполнена: {result.stdout}")
         return True, result.stdout
@@ -73,7 +88,9 @@ def run_command_with_user(cmd, sys_user=None, cwd=None, env=None):
         tuple: (success: bool, output: str)
     """
     if sys_user and sys_user != 'root':
-        full_cmd = f"sudo -u {sys_user} {cmd}"
+        # Используем sudo с опцией -H для установки HOME в домашнюю директорию целевого пользователя
+        # и -i для имитации логина (загружает окружение пользователя)
+        full_cmd = f"sudo -u {sys_user} -i {cmd}"
         log.info(f"Выполнение от пользователя {sys_user}: {cmd}")
     else:
         full_cmd = cmd
