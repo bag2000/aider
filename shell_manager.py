@@ -7,7 +7,7 @@
 import subprocess
 from logger_manager import log
 
-def run_command(cmd, cwd=None, env=None, shell=True):
+def run_command(cmd, cwd=None, env=None, shell=True, check_stderr=True):
     """
     Выполняет команду и возвращает (success, output).
 
@@ -16,6 +16,7 @@ def run_command(cmd, cwd=None, env=None, shell=True):
         cwd (str, optional): Рабочая директория.
         env (dict, optional): Переменные окружения.
         shell (bool): Использовать ли shell для выполнения.
+        check_stderr (bool): Проверять ли stderr на наличие ошибок.
 
     Returns:
         tuple: (success: bool, output: str)
@@ -25,18 +26,34 @@ def run_command(cmd, cwd=None, env=None, shell=True):
         result = subprocess.run(
             cmd,
             shell=shell,
-            check=True,
+            check=False,  # Не вызываем исключение при ненулевом коде возврата
             capture_output=True,
             text=True,
             cwd=cwd,
             env=env
         )
+        # Проверяем код возврата
+        if result.returncode != 0:
+            error_msg = f"Команда завершилась с кодом {result.returncode}: {result.stderr}"
+            log.error(error_msg)
+            return False, result.stderr
+        
+        # Проверяем stderr на наличие ошибок, даже если код возврата 0
+        if check_stderr and result.stderr:
+            # Для некоторых команд (например, pg_dump) ошибки выводятся в stderr, но код возврата 0
+            # Проверяем ключевые слова ошибок
+            error_keywords = ['error', 'fatal', 'failed', 'неверный', 'ошибка', 'не удалось']
+            stderr_lower = result.stderr.lower()
+            if any(keyword in stderr_lower for keyword in error_keywords):
+                error_msg = f"Обнаружена ошибка в stderr: {result.stderr}"
+                log.error(error_msg)
+                return False, result.stderr
+            else:
+                # Если stderr не содержит ошибок, это может быть предупреждение
+                log.warning(f"Команда выполнилась с предупреждением: {result.stderr}")
+        
         log.debug(f"Команда успешно выполнена: {result.stdout}")
         return True, result.stdout
-    except subprocess.CalledProcessError as e:
-        error_msg = f"Ошибка выполнения команды: {e.stderr}"
-        log.error(error_msg)
-        return False, error_msg
     except Exception as e:
         error_msg = f"Неожиданная ошибка: {e}"
         log.error(error_msg)
@@ -61,7 +78,7 @@ def run_command_with_user(cmd, sys_user=None, cwd=None, env=None):
     else:
         full_cmd = cmd
         log.info(f"Выполнение от текущего пользователя: {cmd}")
-    return run_command(full_cmd, cwd=cwd, env=env)
+    return run_command(full_cmd, cwd=cwd, env=env, check_stderr=True)
 
 def run_command_in_container(container_name, cmd, cwd=None, env=None):
     """
@@ -78,7 +95,7 @@ def run_command_in_container(container_name, cmd, cwd=None, env=None):
     """
     docker_cmd = f"docker exec {container_name} sh -c '{cmd}'"
     log.info(f"Выполнение внутри контейнера {container_name}: {cmd}")
-    return run_command(docker_cmd, cwd=cwd, env=env)
+    return run_command(docker_cmd, cwd=cwd, env=env, check_stderr=True)
 
 # Экспорт функций
 __all__ = ['run_command', 'run_command_with_user', 'run_command_in_container']
