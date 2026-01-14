@@ -54,14 +54,16 @@ def run_command(cmd, cwd=None, env=None, shell=True, check_stderr=True):
             # Игнорируем определённые безобидные предупреждения
             ignore_patterns = [
                 'could not change directory',
-                'отказано в доступе',
-                'permission denied'
+                # 'отказано в доступе' и 'permission denied' теперь являются ошибками, поэтому удаляем их из игнорируемых
             ]
             
             # Проверяем, содержит ли stderr игнорируемые предупреждения
             has_ignore_pattern = any(pattern in stderr_lower for pattern in ignore_patterns)
             
-            if any(keyword in stderr_lower for keyword in error_keywords) and not has_ignore_pattern:
+            # Проверяем наличие ключевых слов ошибок
+            has_error_keyword = any(keyword in stderr_lower for keyword in error_keywords)
+            
+            if has_error_keyword and not has_ignore_pattern:
                 error_msg = f"Обнаружена ошибка в stderr: {result.stderr}"
                 log.error(error_msg)
                 return False, result.stderr
