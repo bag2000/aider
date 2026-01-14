@@ -59,7 +59,7 @@ def init_checks(token: str, base_url_override: str = None):
             print(f"Предупреждение: у задачи '{task.get('name')}' отсутствует slug, пропускаем.")
             continue
 
-        full_slug = f"{server_name}_{task_slug}"
+        full_slug = f"{server_name}-{task_slug}"
         task_tag = task.get('tag', 'prod www')
         print(f"  Создание чека для задачи: {task.get('name')} (slug: {full_slug}, tags: {task_tag})")
 
