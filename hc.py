@@ -86,5 +86,3 @@ def _send_ping(url: str, data: str = None) -> None:
         else:
             response = session.post(url, timeout=10)
         response.raise_for_status()
-
-
