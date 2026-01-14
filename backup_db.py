@@ -73,6 +73,10 @@ def backup_task(task, general_settings):
         dump_cmd = f"{bin_path} {args}"
         if db_user:
             dump_cmd = f"mysql --user={db_user} --password='' {args}"
+    elif not db_type or db_type == "restic":
+        # Для задач, не связанных с БД (например, restic check)
+        # Используем bin_path и args напрямую
+        dump_cmd = f"{bin_path} {args}"
     else:
         log.error(f"Неизвестный тип БД: {db_type}")
         # Отправляем fail ping
