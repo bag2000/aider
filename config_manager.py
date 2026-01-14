@@ -61,28 +61,6 @@ def get_general_settings():
         'ping_base': general.get('ping_base', 'https://hc-ping.com')
     }
 
-def get_enabled_db_backup_tasks():
-    """
-    Возвращает список задач резервного копирования БД, у которых enable: true.
-    
-    Returns:
-        list: Список словарей с настройками задач.
-    
-    Raises:
-        SystemExit: Если конфигурация не загружена или отсутствует секция tasks_backup_db.
-    """
-    if _CONFIG is None:
-        load_config()
-    
-    tasks = _CONFIG.get('tasks_backup_db')
-    if tasks is None:
-        print("Ошибка: В конфигурации отсутствует секция 'tasks_backup_db'.", file=sys.stderr)
-        sys.exit(1)
-    
-    # Фильтруем только включённые задачи
-    enabled_tasks = [task for task in tasks if task.get('enable') is True]
-    return enabled_tasks
-
 def get_enabled_tasks():
     """
     Возвращает список задач из секции tasks, у которых enable: true.
@@ -119,7 +97,7 @@ if __name__ == "__main__":
     print(f"Общие настройки: {general}")
     
     # Получаем включённые задачи
-    enabled_tasks = get_enabled_db_backup_tasks()
+    enabled_tasks = get_enabled_tasks()
     print(f"Найдено включённых задач: {len(enabled_tasks)}")
     for i, task in enumerate(enabled_tasks, 1):
         print(f"  {i}. {task.get('name')} (slug: {task.get('slug')})")
