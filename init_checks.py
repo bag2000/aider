@@ -58,13 +58,16 @@ def init_checks(token: str, base_url_override: str = None):
             continue
 
         full_slug = f"{server_name}_{task_slug}"
-        print(f"  Создание чека для задачи: {task.get('name')} (slug: {full_slug})")
+        task_tag = task.get('tag', 'prod www')
+        print(f"  Создание чека для задачи: {task.get('name')} (slug: {full_slug}, tags: {task_tag})")
 
+        # Определяем теги для чека
+        task_tag = task.get('tag', 'prod www')
         try:
             result = add_check(
                 token=token,
                 name=server_name,
-                tags="prod www",
+                tags=task_tag,
                 timeout=3600,
                 grace=60,
                 channels="",
