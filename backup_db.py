@@ -42,14 +42,13 @@ def backup_task(task, general_settings):
     log.info(f"Начинаем резервное копирование задачи: {task_name}")
 
     # Проверка обязательных параметров
-    if not all([task_slug, db_type, bin_path, output_file, backup_path]):
+    # Для задач без output_file (например, restic check) не требуем output_file
+    required_params = [task_slug, db_type, bin_path, backup_path]
+    if output_file:
+        required_params.append(output_file)
+    if not all(required_params):
         log.error(f"Задача '{task_name}' пропущена: отсутствуют обязательные параметры.")
         return False
-
-    # Формируем полный путь для сохранения резервной копии
-    backup_dir = pathlib.Path(backup_path)
-    backup_dir.mkdir(parents=True, exist_ok=True)
-    output_path = backup_dir / output_file
 
     # Формируем ping URL
     ping_url = construct_ping_url(ping_base, server_name, task_slug)
@@ -90,34 +89,59 @@ def backup_task(task, general_settings):
     # Если указан контейнер, выполняем команду внутри него
     if container_name:
         # Команда для выполнения внутри контейнера Docker
-        # Сначала формируем полную команду с сжатием
-        full_cmd = f"{dump_cmd} | gzip -c > {output_path}"
+        # Если output_file пустой, не перенаправляем вывод в файл
+        if output_file:
+            # Формируем полный путь для сохранения резервной копии
+            backup_dir = pathlib.Path(backup_path)
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            output_path = backup_dir / output_file
+            full_cmd = f"{dump_cmd} | gzip -c > {output_path}"
+        else:
+            full_cmd = dump_cmd
+            output_path = None
         success, output = run_command_in_container(container_name, full_cmd)
     else:
         # Локальное выполнение через sudo, если указан sys_user
-        # Формируем команду с сжатием
-        full_cmd = f"{dump_cmd} | gzip -c > {output_path}"
+        # Если output_file пустой, не перенаправляем вывод в файл
+        if output_file:
+            backup_dir = pathlib.Path(backup_path)
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            output_path = backup_dir / output_file
+            full_cmd = f"{dump_cmd} | gzip -c > {output_path}"
+        else:
+            full_cmd = dump_cmd
+            output_path = None
         success, output = run_command_with_user(full_cmd, sys_user)
 
     if success:
-        # Проверяем, что файл создан и не пустой
-        if output_path.exists() and output_path.stat().st_size > 0:
-            log.info(f"Резервная копия успешно создана: {output_path}")
-            # Отправляем success ping
+        # Если output_file указан, проверяем, что файл создан и не пустой
+        if output_file:
+            if output_path.exists() and output_path.stat().st_size > 0:
+                log.info(f"Резервная копия успешно создана: {output_path}")
+                # Отправляем success ping
+                try:
+                    ping_success(ping_url, data=f"Резервное копирование {task_name} завершено успешно")
+                    log.info("Отправлен success ping.")
+                except Exception as e:
+                    log.warning(f"Не удалось отправить success ping: {e}")
+                return True
+            else:
+                log.error(f"Файл резервной копии не создан или пуст: {output_path}")
+                # Отправляем fail ping
+                try:
+                    ping_fail(ping_url, data=f"Файл резервной копии не создан или пуст: {output_path}")
+                except Exception as e:
+                    log.warning(f"Не удалось отправить fail ping: {e}")
+                return False
+        else:
+            # Для задач без output_file считаем успехом сам факт успешного выполнения команды
+            log.info(f"Команда выполнена успешно: {dump_cmd}")
             try:
-                ping_success(ping_url, data=f"Резервное копирование {task_name} завершено успешно")
+                ping_success(ping_url, data=f"Задача {task_name} завершена успешно")
                 log.info("Отправлен success ping.")
             except Exception as e:
                 log.warning(f"Не удалось отправить success ping: {e}")
             return True
-        else:
-            log.error(f"Файл резервной копии не создан или пуст: {output_path}")
-            # Отправляем fail ping
-            try:
-                ping_fail(ping_url, data=f"Файл резервной копии не создан или пуст: {output_path}")
-            except Exception as e:
-                log.warning(f"Не удалось отправить fail ping: {e}")
-            return False
     else:
         log.error(f"Ошибка при выполнении резервного копирования: {output}")
         # Отправляем fail ping
