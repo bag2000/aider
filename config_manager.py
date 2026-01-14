@@ -46,12 +46,12 @@ def get_general_settings():
             - 'base_url'
             - 'ping_base'
             - 'channels'
-            - 'BACKUP_PATHS'
-            - 'RESTIC_REPOSITORY'
-            - 'RESTIC_PASSWORD_FILE'
-            - 'RESTIC_CACHE_DIR'
-            - 'RESTIC_PACK_SIZE'
-            - 'EXCLUDE_FILE'
+            - 'backup_paths'
+            - 'restic_repository'
+            - 'restic_password_file'
+            - 'restic_cache_dir'
+            - 'restic_pack_size'
+            - 'exclude_file'
     
     Raises:
         SystemExit: Если конфигурация не загружена или отсутствует секция general.
@@ -72,12 +72,12 @@ def get_general_settings():
         'ping_base': general.get('ping_base', 'https://hc-ping.com'),
         'channels': general.get('channels', ''),
         # Настройки для restic backup
-        'BACKUP_PATHS': general.get('BACKUP_PATHS', '/'),
-        'RESTIC_REPOSITORY': general.get('RESTIC_REPOSITORY', '/path/to/repo'),
-        'RESTIC_PASSWORD_FILE': general.get('RESTIC_PASSWORD_FILE', '.restic_pass'),
-        'RESTIC_CACHE_DIR': general.get('RESTIC_CACHE_DIR', 'cache'),
-        'RESTIC_PACK_SIZE': general.get('RESTIC_PACK_SIZE', '128'),
-        'EXCLUDE_FILE': general.get('EXCLUDE_FILE', 'exclude.txt')
+        'backup_paths': general.get('backup_paths', '/'),
+        'restic_repository': general.get('restic_repository', '/path/to/repo'),
+        'restic_password_file': general.get('restic_password_file', '.restic_pass'),
+        'restic_cache_dir': general.get('restic_cache_dir', 'cache'),
+        'restic_pack_size': general.get('restic_pack_size', '128'),
+        'exclude_file': general.get('exclude_file', 'exclude.txt')
     }
 
 def get_enabled_tasks():
