@@ -33,7 +33,7 @@ def add_check(
         session.headers.update(headers)
 
         # check existence
-        response = session.get(base_url, params={"slug": name})
+        response = session.get(base_url, params={"slug": name}, timeout=10)
         response.raise_for_status()
         checks = response.json().get("checks", [])
 
@@ -44,7 +44,7 @@ def add_check(
             }
 
         # create check
-        response = session.post(base_url, json=payload)
+        response = session.post(base_url, json=payload, timeout=10)
         response.raise_for_status()
 
         return {
@@ -82,7 +82,7 @@ def _send_ping(url: str, data: str = None) -> None:
     """
     with requests.Session() as session:
         if data is not None:
-            response = session.post(url, data=data.encode("utf-8"))
+            response = session.post(url, data=data.encode("utf-8"), timeout=10)
         else:
-            response = session.post(url)
+            response = session.post(url, timeout=10)
         response.raise_for_status()
