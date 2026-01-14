@@ -6,7 +6,6 @@
 
 import sys
 import os
-import subprocess
 import config_manager
 from hc import ping_start, ping_success, ping_fail
 from logger_manager import log
