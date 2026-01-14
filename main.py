@@ -34,6 +34,12 @@ def main():
             print("Ошибка: server_name не указан в секции general", file=sys.stderr)
             sys.exit(1)
 
+        # Определяем base_url: приоритет у аргумента командной строки, затем конфигурация
+        base_url = args.base_url if args.base_url != "https://healthchecks.io/api/v1/checks/" else general.get('base_url')
+        ping_base = general.get('ping_base', 'https://hc-ping.com')
+        print(f"Используемый base_url: {base_url}")
+        print(f"Используемый ping_base: {ping_base}")
+
         # Получаем включённые задачи
         try:
             tasks = config_manager.get_enabled_tasks()
@@ -66,7 +72,8 @@ def main():
                     timeout=3600,
                     grace=60,
                     channels="",
-                    base_url=args.base_url,
+                    base_url=base_url,
+                    slug=full_slug,
                 )
                 print(f"    Результат: {result['status']}")
                 if 'check' in result and 'ping_url' in result['check']:

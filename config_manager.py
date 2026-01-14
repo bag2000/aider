@@ -40,7 +40,7 @@ def get_general_settings():
     Возвращает словарь с общими настройками из секции general.
     
     Returns:
-        dict: Содержит ключи 'backup_path' и 'server_name'.
+        dict: Содержит ключи 'backup_path', 'server_name', 'base_url', 'ping_base'.
     
     Raises:
         SystemExit: Если конфигурация не загружена или отсутствует секция general.
@@ -56,7 +56,9 @@ def get_general_settings():
     # Возвращаем копию, чтобы избежать случайных изменений
     return {
         'backup_path': general.get('backup_path'),
-        'server_name': general.get('server_name')
+        'server_name': general.get('server_name'),
+        'base_url': general.get('base_url', 'https://healthchecks.io/api/v1/checks/'),
+        'ping_base': general.get('ping_base', 'https://hc-ping.com')
     }
 
 def get_enabled_db_backup_tasks():
