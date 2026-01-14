@@ -1,0 +1,68 @@
+# Пути (относительные к BASE_DIR)
+BACKUP_PATHS="/"
+RESTIC_REPOSITORY="/path/to/repo"
+RESTIC_PASSWORD_FILE=".restic_pass"
+RESTIC_CACHE_DIR="cache"
+RESTIC_PACK_SIZE="128"
+EXCLUDE_FILE="exclude.txt"
+LOG_FILE="backup.log"
+
+# Настройки хранения
+RETENTION_DAYS=14
+RETENTION_WEEKS=4
+RETENTION_MONTH=4
+RETENTION_YEAR=2
+
+
+# ==============================================================================
+# КОНФИГУРАЦИЯ СКРИПТА
+# ==============================================================================
+
+# Общие настройки хранилища для резервных копий баз данных
+storage:
+  # Директория, куда будут складываться готовые дампы
+  backup_path: "/bak/db"
+
+# Список задач на бэкап. Скрипт должен обходить этот список в цикле.
+tasks_backup_db:
+  # ----------------------------------------------------------------------------
+  # Пример 1: Локальный PostgreSQL
+  # Логика: если container_name пуст -> используем sudo -u [sys_user]
+  # ----------------------------------------------------------------------------
+  - name: "postgres_local"
+    db_type: "postgres"
+    container_name: ""           # Пусто: выполнение на хостовой машине
+    bin_path: "/usr/local/pgsql/bin/pg_dumpall"
+    args: ""                     # Дополнительные флаги (например, --clean)
+    db_user: "postgres"          # Пользователь базы данных (для ключа -U)
+    sys_user: "postgres"         # Системный пользователь для команды sudo
+    output_file: "dump_alldb_pg.sql.gz"
+    enable: true                 # Флаг активности задачи
+
+  # ----------------------------------------------------------------------------
+  # Пример 2: Локальный MySQL
+  # Логика: используем ключ --all-databases для полного бэкапа
+  # ----------------------------------------------------------------------------
+  - name: "mysql_local"
+    db_type: "mysql"
+    container_name: ""
+    bin_path: "/usr/bin/mysqldump"
+    args: "--all-databases"      # Обязательно для захвата всех баз сразу
+    db_user: "user_mysql"        # Пользователь БД (убедитесь, что настроен .my.cnf)
+    sys_user: "root"             # Запуск утилиты от имени root сервера
+    output_file: "dump_alldb_mysql.sql.gz"
+    enable: false
+
+  # ----------------------------------------------------------------------------
+  # Пример 3: PostgreSQL внутри Docker-контейнера
+  # Логика: если container_name НЕ пуст -> используем docker exec -u [db_user]
+  # ----------------------------------------------------------------------------
+  - name: "postgres_docker"
+    db_type: "postgres"
+    container_name: "my_postgres_container" # Имя или ID запущенного контейнера
+    bin_path: "pg_dumpall"       # Путь внутри контейнера (обычно просто имя в PATH)
+    args: ""
+    db_user: "postgres"          # Пользователь внутри СУБД в контейнере
+    sys_user: "postgres"         # Техническое поле (в докере обычно совпадает с db_user)
+    output_file: "dump_docker_alldb_pg.sql.gz"
+    enable: false

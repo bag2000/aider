@@ -1,6 +1,6 @@
 .aider*
 # Конфигурация и секреты
-init.conf
+#init.conf
 .restic_pass
 
 # Логи
@@ -10,4 +10,4 @@ init.conf
 cache/
 
 # Промпт
-*prompt*
+#*prompt*

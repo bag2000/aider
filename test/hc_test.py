@@ -26,16 +26,16 @@ def main():
     logger = logging.getLogger(__name__)
 
     # Конфигурация (замените на реальные значения)
-    API_TOKEN = "ваш_api_токен_healthchecks"
-    BASE_URL = "https://healthchecks.io/api/v1/checks/"
+    API_TOKEN = ""
+    BASE_URL = "https://hc.ext.ru/api/v3/checks/"
     PING_BASE = "https://hc-ping.com"
 
     # Параметры нового чека
     check_name = "example_check"
-    tags = "prod,backup"
+    tags = "prod backup" # указываем через пробел
     timeout_seconds = 3600
-    grace_seconds = 300
-    channels = ""  # можно указать идентификаторы каналов через запятую
+    grace_seconds = 60
+    channels = "319329f7-0060-4219-8fd8-6f8a1d1f2258,abbddf53-8bf5-47bf-bc85-e79d99d08c70"  # можно указать идентификаторы каналов через запятую, слитно
 
     try:
         logger.info("1. Создание чека (если не существует)...")
@@ -71,9 +71,9 @@ def main():
         # Имитация работы задачи
         logger.info("3. Выполнение задачи...")
         # ... здесь код вашей задачи ...
-        # Для примера просто ждём 1 секунду
+        # Для примера просто ждём 5 секунду
         import time
-        time.sleep(1)
+        time.sleep(5)
 
         # В зависимости от результата отправляем success или fail
         task_succeeded = True  # замените на реальный результат
