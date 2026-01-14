@@ -6,23 +6,14 @@
 """
 
 import sys
-import os
 import subprocess
-import logging
 import pathlib
 import config_manager
 from hc import ping_start, ping_success, ping_fail
+from logger_manager import log
 
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('backup_db.log')
-    ]
-)
-logger = logging.getLogger(__name__)
+# Удаляем стандартный логгер, так как используем Loguru
+# (уже настроен в logger_manager)
 
 
 def run_command(cmd, cwd=None, env=None):
@@ -30,7 +21,7 @@ def run_command(cmd, cwd=None, env=None):
     Выполняет команду и возвращает (success, output).
     """
     try:
-        logger.debug(f"Выполнение команды: {cmd}")
+        log.debug(f"Выполнение команды: {cmd}")
         result = subprocess.run(
             cmd,
             shell=True,
@@ -40,15 +31,15 @@ def run_command(cmd, cwd=None, env=None):
             cwd=cwd,
             env=env
         )
-        logger.debug(f"Команда успешно выполнена: {result.stdout}")
+        log.debug(f"Команда успешно выполнена: {result.stdout}")
         return True, result.stdout
     except subprocess.CalledProcessError as e:
         error_msg = f"Ошибка выполнения команды: {e.stderr}"
-        logger.error(error_msg)
+        log.error(error_msg)
         return False, error_msg
     except Exception as e:
         error_msg = f"Неожиданная ошибка: {e}"
-        logger.error(error_msg)
+        log.error(error_msg)
         return False, error_msg
 
 
@@ -78,11 +69,11 @@ def backup_task(task, general_settings):
     server_name = general_settings.get('server_name')
     ping_base = general_settings.get('ping_base', 'https://hc-ping.com')
 
-    logger.info(f"Начинаем резервное копирование задачи: {task_name}")
+    log.info(f"Начинаем резервное копирование задачи: {task_name}")
 
     # Проверка обязательных параметров
     if not all([task_slug, db_type, bin_path, output_file, backup_path]):
-        logger.error(f"Задача '{task_name}' пропущена: отсутствуют обязательные параметры.")
+        log.error(f"Задача '{task_name}' пропущена: отсутствуют обязательные параметры.")
         return False
 
     # Формируем полный путь для сохранения резервной копии
@@ -92,14 +83,14 @@ def backup_task(task, general_settings):
 
     # Формируем ping URL
     ping_url = construct_ping_url(ping_base, server_name, task_slug)
-    logger.info(f"Ping URL для задачи: {ping_url}")
+    log.info(f"Ping URL для задачи: {ping_url}")
 
     # Отправляем start ping
     try:
         ping_start(ping_url, data=f"Начало резервного копирования {task_name}")
-        logger.info("Отправлен start ping.")
+        log.info("Отправлен start ping.")
     except Exception as e:
-        logger.warning(f"Не удалось отправить start ping: {e}")
+        log.warning(f"Не удалось отправить start ping: {e}")
 
     # Определяем команду резервного копирования в зависимости от типа БД
     if db_type == "postgres":
@@ -113,12 +104,12 @@ def backup_task(task, general_settings):
         if db_user:
             dump_cmd = f"mysql --user={db_user} --password='' {args}"
     else:
-        logger.error(f"Неизвестный тип БД: {db_type}")
+        log.error(f"Неизвестный тип БД: {db_type}")
         # Отправляем fail ping
         try:
             ping_fail(ping_url, data=f"Неизвестный тип БД: {db_type}")
         except Exception as e:
-            logger.warning(f"Не удалось отправить fail ping: {e}")
+            log.warning(f"Не удалось отправить fail ping: {e}")
         return False
 
     # Если указан контейнер, выполняем команду внутри него
@@ -126,7 +117,7 @@ def backup_task(task, general_settings):
         # Команда для выполнения внутри контейнера Docker
         docker_cmd = f"docker exec {container_name} sh -c '{dump_cmd}'"
         full_cmd = docker_cmd
-        logger.info(f"Выполнение внутри контейнера: {container_name}")
+        log.info(f"Выполнение внутри контейнера: {container_name}")
     else:
         # Локальное выполнение через sudo, если указан sys_user
         if sys_user and sys_user != 'root':
@@ -134,7 +125,7 @@ def backup_task(task, general_settings):
         else:
             sudo_cmd = dump_cmd
         full_cmd = sudo_cmd
-        logger.info(f"Локальное выполнение от пользователя: {sys_user or 'текущий'}")
+        log.info(f"Локальное выполнение от пользователя: {sys_user or 'текущий'}")
 
     # Добавляем сжатие и сохранение в файл
     full_cmd = f"{full_cmd} | gzip -c > {output_path}"
@@ -145,29 +136,29 @@ def backup_task(task, general_settings):
     if success:
         # Проверяем, что файл создан и не пустой
         if output_path.exists() and output_path.stat().st_size > 0:
-            logger.info(f"Резервная копия успешно создана: {output_path}")
+            log.info(f"Резервная копия успешно создана: {output_path}")
             # Отправляем success ping
             try:
                 ping_success(ping_url, data=f"Резервное копирование {task_name} завершено успешно")
-                logger.info("Отправлен success ping.")
+                log.info("Отправлен success ping.")
             except Exception as e:
-                logger.warning(f"Не удалось отправить success ping: {e}")
+                log.warning(f"Не удалось отправить success ping: {e}")
             return True
         else:
-            logger.error(f"Файл резервной копии не создан или пуст: {output_path}")
+            log.error(f"Файл резервной копии не создан или пуст: {output_path}")
             # Отправляем fail ping
             try:
                 ping_fail(ping_url, data=f"Файл резервной копии не создан или пуст: {output_path}")
             except Exception as e:
-                logger.warning(f"Не удалось отправить fail ping: {e}")
+                log.warning(f"Не удалось отправить fail ping: {e}")
             return False
     else:
-        logger.error(f"Ошибка при выполнении резервного копирования: {output}")
+        log.error(f"Ошибка при выполнении резервного копирования: {output}")
         # Отправляем fail ping
         try:
             ping_fail(ping_url, data=f"Ошибка при выполнении резервного копирования: {output}")
         except Exception as e:
-            logger.warning(f"Не удалось отправить fail ping: {e}")
+            log.warning(f"Не удалось отправить fail ping: {e}")
         return False
 
 
@@ -175,7 +166,7 @@ def main():
     """
     Основная функция скрипта.
     """
-    logger.info("Запуск скрипта резервного копирования БД.")
+    log.info("Запуск скрипта резервного копирования БД.")
 
     # Загружаем конфигурацию
     try:
@@ -183,14 +174,14 @@ def main():
         general_settings = config_manager.get_general_settings()
         tasks = config_manager.get_enabled_tasks()
     except SystemExit as e:
-        logger.error(f"Ошибка загрузки конфигурации: {e}")
+        log.error(f"Ошибка загрузки конфигурации: {e}")
         sys.exit(1)
 
     if not tasks:
-        logger.warning("Нет включённых задач для резервного копирования.")
+        log.warning("Нет включённых задач для резервного копирования.")
         sys.exit(0)
 
-    logger.info(f"Найдено {len(tasks)} включённых задач.")
+    log.info(f"Найдено {len(tasks)} включённых задач.")
 
     # Выполняем резервное копирование для каждой задачи
     results = []
@@ -199,18 +190,18 @@ def main():
         results.append((task.get('name'), success))
 
     # Итоговый отчёт
-    logger.info("=" * 50)
-    logger.info("ИТОГ ВЫПОЛНЕНИЯ:")
+    log.info("=" * 50)
+    log.info("ИТОГ ВЫПОЛНЕНИЯ:")
     for task_name, success in results:
         status = "УСПЕХ" if success else "ОШИБКА"
-        logger.info(f"  {task_name}: {status}")
+        log.info(f"  {task_name}: {status}")
 
     # Если хотя бы одна задача завершилась неудачно, завершаем с кодом ошибки
     if any(not success for _, success in results):
-        logger.error("Некоторые задачи завершились с ошибкой.")
+        log.error("Некоторые задачи завершились с ошибкой.")
         sys.exit(1)
     else:
-        logger.info("Все задачи выполнены успешно.")
+        log.info("Все задачи выполнены успешно.")
         sys.exit(0)
 
 

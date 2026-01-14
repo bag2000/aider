@@ -6,6 +6,7 @@
 import sys
 import config_manager
 from hc import add_check
+from logger_manager import log
 
 
 def init_checks(token: str, base_url_override: str = None):
@@ -34,9 +35,9 @@ def init_checks(token: str, base_url_override: str = None):
 
     ping_base = general.get('ping_base', 'https://hc-ping.com')
     channels = general.get('channels', '')
-    print(f"Используемый base_url: {base_url}")
-    print(f"Используемый ping_base: {ping_base}")
-    print(f"Используемые каналы: {channels if channels else '(пусто)'}")
+    log.info(f"Используемый base_url: {base_url}")
+    log.info(f"Используемый ping_base: {ping_base}")
+    log.info(f"Используемые каналы: {channels if channels else '(пусто)'}")
 
     # Получаем включённые задачи
     try:
@@ -47,21 +48,21 @@ def init_checks(token: str, base_url_override: str = None):
         sys.exit(1)
 
     if not tasks:
-        print("Нет включённых задач для создания чеков.")
+        log.warning("Нет включённых задач для создания чеков.")
         sys.exit(0)
 
-    print(f"Создание чеков для сервера: {server_name}")
-    print(f"Найдено включённых задач: {len(tasks)}")
+    log.info(f"Создание чеков для сервера: {server_name}")
+    log.info(f"Найдено включённых задач: {len(tasks)}")
 
     for task in tasks:
         task_slug = task.get('slug')
         if not task_slug:
-            print(f"Предупреждение: у задачи '{task.get('name')}' отсутствует slug, пропускаем.")
+            log.warning(f"У задачи '{task.get('name')}' отсутствует slug, пропускаем.")
             continue
 
         full_slug = f"{server_name}-{task_slug}"
         task_tag = task.get('tag', 'prod www')
-        print(f"  Создание чека для задачи: {task.get('name')} (slug: {full_slug}, tags: {task_tag})")
+        log.info(f"Создание чека для задачи: {task.get('name')} (slug: {full_slug}, tags: {task_tag})")
 
         # Определяем теги для чека
         task_tag = task.get('tag', 'prod www')
@@ -76,13 +77,13 @@ def init_checks(token: str, base_url_override: str = None):
                 base_url=base_url,
                 slug=full_slug,
             )
-            print(f"    Результат: {result['status']}")
+            log.info(f"Результат: {result['status']}")
             if 'check' in result and 'ping_url' in result['check']:
-                print(f"    Ping URL: {result['check']['ping_url']}")
+                log.info(f"Ping URL: {result['check']['ping_url']}")
         except Exception as e:
-            print(f"    Ошибка при создании чека: {e}", file=sys.stderr)
+            log.error(f"Ошибка при создании чека: {e}")
 
-    print("Инициализация завершена.")
+    log.info("Инициализация завершена.")
 
 
 def main():
