@@ -51,3 +51,38 @@ def add_check(
             "status": "created",
             "check": response.json(),
         }
+
+
+def ping_start(ping_url: str, data: str = None) -> None:
+    """
+    Send a start signal to Healthchecks.
+    """
+    url = f"{ping_url}/start"
+    _send_ping(url, data)
+
+
+def ping_success(ping_url: str, data: str = None) -> None:
+    """
+    Send a success signal to Healthchecks.
+    """
+    _send_ping(ping_url, data)
+
+
+def ping_fail(ping_url: str, data: str = None) -> None:
+    """
+    Send a fail signal to Healthchecks.
+    """
+    url = f"{ping_url}/fail"
+    _send_ping(url, data)
+
+
+def _send_ping(url: str, data: str = None) -> None:
+    """
+    Internal helper to send a POST request to a Healthchecks ping endpoint.
+    """
+    with requests.Session() as session:
+        if data is not None:
+            response = session.post(url, data=data.encode("utf-8"))
+        else:
+            response = session.post(url)
+        response.raise_for_status()
