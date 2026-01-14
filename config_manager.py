@@ -40,7 +40,18 @@ def get_general_settings():
     Возвращает словарь с общими настройками из секции general.
     
     Returns:
-        dict: Содержит ключи 'backup_path', 'server_name', 'base_url', 'ping_base'.
+        dict: Содержит ключи:
+            - 'backup_path'
+            - 'server_name'
+            - 'base_url'
+            - 'ping_base'
+            - 'channels'
+            - 'BACKUP_PATHS'
+            - 'RESTIC_REPOSITORY'
+            - 'RESTIC_PASSWORD_FILE'
+            - 'RESTIC_CACHE_DIR'
+            - 'RESTIC_PACK_SIZE'
+            - 'EXCLUDE_FILE'
     
     Raises:
         SystemExit: Если конфигурация не загружена или отсутствует секция general.
@@ -59,7 +70,14 @@ def get_general_settings():
         'server_name': general.get('server_name'),
         'base_url': general.get('base_url', 'https://healthchecks.io/api/v1/checks/'),
         'ping_base': general.get('ping_base', 'https://hc-ping.com'),
-        'channels': general.get('channels', '')
+        'channels': general.get('channels', ''),
+        # Настройки для restic backup
+        'BACKUP_PATHS': general.get('BACKUP_PATHS', '/'),
+        'RESTIC_REPOSITORY': general.get('RESTIC_REPOSITORY', '/path/to/repo'),
+        'RESTIC_PASSWORD_FILE': general.get('RESTIC_PASSWORD_FILE', '.restic_pass'),
+        'RESTIC_CACHE_DIR': general.get('RESTIC_CACHE_DIR', 'cache'),
+        'RESTIC_PACK_SIZE': general.get('RESTIC_PACK_SIZE', '128'),
+        'EXCLUDE_FILE': general.get('EXCLUDE_FILE', 'exclude.txt')
     }
 
 def get_enabled_tasks():
