@@ -68,7 +68,7 @@ def init_checks(token: str, base_url_override: str = None):
         try:
             result = add_check(
                 token=token,
-                name=server_name,
+                name=full_slug,  # Имя чека должно совпадать со slug
                 tags=task_tag,
                 timeout=3600,
                 grace=60,
