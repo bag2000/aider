@@ -42,7 +42,13 @@ def run_command(cmd, cwd=None, env=None, shell=True, check_stderr=True):
         if check_stderr and result.stderr:
             # Для некоторых команд (например, pg_dump) ошибки выводятся в stderr, но код возврата 0
             # Проверяем ключевые слова ошибок
-            error_keywords = ['error', 'fatal', 'failed', 'неверный', 'ошибка', 'не удалось']
+            error_keywords = [
+                'error', 'fatal', 'failed', 
+                'неверный', 'ошибка', 'не удалось',
+                'нет такого файла', 'command not found', 'not found',
+                'отсутствует', 'не найден', 'cannot access',
+                'permission denied', 'отказано в доступе'
+            ]
             stderr_lower = result.stderr.lower()
             
             # Игнорируем определённые безобидные предупреждения
