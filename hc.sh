@@ -24,8 +24,19 @@ fi
 
 # Базовый URL сервиса Healthchecks
 : "${BASE_URL:="https://hc.t8.ru/ping"}"
-# API ключ (ping API)
-: "${PING_API:="qpljt3jgl2inp8lkya6h1a"}"
+# API ключ (ping API) - должен быть задан явно
+: "${PING_API:=}"
+
+# Проверяем, что PING_API не пустой
+if [[ -z "${PING_API}" ]]; then
+    # Используем log_error, если log.sh подключен, иначе echo
+    if command -v log_error >/dev/null 2>&1; then
+        log_error "Переменная PING_API не задана. Задайте её перед использованием скрипта."
+    else
+        echo "[ERROR] Переменная PING_API не задана. Задайте её перед использованием скрипта." >&2
+    fi
+    exit 1
+fi
 
 # Функция отправки heartbeat
 _send_hc() {
