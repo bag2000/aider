@@ -22,7 +22,7 @@ log_error "Ошибка"
 
 ## hc.sh
 
-Отправка heartbeat в Healthchecks.io.
+Отправка Healthchecks в Healthchecks.io.
 
 ### Требования
 

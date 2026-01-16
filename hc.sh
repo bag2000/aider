@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Heartbeat скрипт для отправки уведомлений в Healthchecks.io
+# Healthchecks скрипт для отправки уведомлений в Healthchecks.io
 # Использование:
 #   ./hc.sh check_success SLUG
 #   source ./hc.sh && check_success SLUG
@@ -40,7 +40,7 @@ if [[ -z "${HC_PING_API}" ]]; then
     exit 1
 fi
 
-# Функция отправки heartbeat
+# Функция отправки Healthchecks
 _send_hc() {
     local slug="$1"
     local action="${2:-}"  # success, fail, start или пусто для обычного ping
@@ -67,10 +67,10 @@ _send_hc() {
     
     # Используем curl с таймаутом
     if curl "${curl_args[@]}" > /dev/null 2>&1; then
-        log_success "Heartbeat отправлен успешно (${slug}${action:+/${action}})"
+        log_success "Healthchecks отправлен успешно (${slug}${action:+/${action}})"
         return 0
     else
-        log_error "Не удалось отправить heartbeat (${slug}${action:+/${action}})"
+        log_error "Не удалось отправить Healthchecks (${slug}${action:+/${action}})"
         return 1
     fi
 }
