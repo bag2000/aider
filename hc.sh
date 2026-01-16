@@ -22,12 +22,22 @@ else
     log_warn() { echo "[WARN] $*" >&2; }
 fi
 
-# Базовый URL сервиса Healthchecks
-: "${HC_BASE_URL:="https://hc.t8.ru/ping"}"
-# API ключ (ping API) - должен быть задан явно
+# Базовый URL сервиса Healthchecks (обязательный)
+: "${HC_BASE_URL:=}"
+# API ключ (ping API) - обязательный
 : "${HC_PING_API:=}"
 # DNS override для curl (например, "192.168.1.1:443:hc.t8.ru")
 : "${HC_DNS:=}"
+
+# Проверяем, что HC_BASE_URL не пустой
+if [[ -z "${HC_BASE_URL}" ]]; then
+    if command -v log_error >/dev/null 2>&1; then
+        log_error "Переменная HC_BASE_URL не задана. Задайте её перед использованием скрипта."
+    else
+        echo "[ERROR] Переменная HC_BASE_URL не задана. Задайте её перед использованием скрипта." >&2
+    fi
+    exit 1
+fi
 
 # Проверяем, что HC_PING_API не пустой
 if [[ -z "${HC_PING_API}" ]]; then
