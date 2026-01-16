@@ -14,6 +14,8 @@ source "${SCRIPT_DIR}/log.sh"
 # Можно переопределить перед вызовом функций
 : "${BASE_URL:=http://localhost}"
 : "${PING_API:=/api/health}"
+: "${HC_METHOD:=GET}"
+: "${HC_METHOD:=GET}"
 
 # Вспомогательная функция для отправки ping в Healthchecks.io
 _send_ping() {
@@ -26,16 +28,52 @@ _send_ping() {
     
     log_info "Отправляем ping на ${ping_url}"
     
+    # Пробуем отправить запрос с выводом отладочной информации
     if command -v curl &> /dev/null; then
-        if curl -s -f --max-time 10 "${ping_url}" > /dev/null; then
-            return 0
+        # Используем -v для verbose, но перенаправляем stderr во временный файл
+        local temp_file
+        temp_file=$(mktemp)
+        local http_code
+        # Отправляем запрос с выбранным методом и сохраняем HTTP код
+        local curl_opts=()
+        if [[ "${HC_METHOD}" == "POST" ]]; then
+            curl_opts=(-X POST)
+        fi
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" "${curl_opts[@]}" --max-time 10 "${ping_url}" 2>"${temp_file}")
+        local curl_exit=$?
+        
+        if [[ ${curl_exit} -eq 0 ]]; then
+            log_info "HTTP код ответа: ${http_code}"
+            if [[ "${http_code}" =~ ^(2|3)[0-9][0-9]$ ]]; then
+                rm -f "${temp_file}"
+                return 0
+            else
+                log_error "Сервер вернул код ошибки: ${http_code}"
+                # Выводим отладочную информацию
+                if [[ -s "${temp_file}" ]]; then
+                    log_error "Детали curl: $(cat "${temp_file}")"
+                fi
+                rm -f "${temp_file}"
+                return 1
+            fi
         else
+            log_error "Curl завершился с кодом ${curl_exit}"
+            if [[ -s "${temp_file}" ]]; then
+                log_error "Детали curl: $(cat "${temp_file}")"
+            fi
+            rm -f "${temp_file}"
             return 1
         fi
     elif command -v wget &> /dev/null; then
-        if wget -q --timeout=10 --tries=1 -O /dev/null "${ping_url}" 2>/dev/null; then
+        # Для wget
+        local wget_output
+        wget_output=$(wget --timeout=10 --tries=1 -O /dev/null "${ping_url}" 2>&1)
+        local wget_exit=$?
+        if [[ ${wget_exit} -eq 0 ]]; then
             return 0
         else
+            log_error "Wget завершился с кодом ${wget_exit}"
+            log_error "Детали wget: ${wget_output}"
             return 1
         fi
     else
@@ -146,4 +184,4 @@ fi
 
 # Экспортируем функции для использования в других скриптах
 export -f check_start check_success check_fail perform_healthcheck _send_ping
-export BASE_URL PING_API
+export BASE_URL PING_API HC_METHOD
