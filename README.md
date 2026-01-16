@@ -28,7 +28,7 @@ log_error "Ошибка"
 
 Перед использованием **обязательно** задайте переменные окружения:
 ```bash
-export HC_BASE_URL="https://hc.t8.ru/ping"
+export HC_BASE_URL="https://hc.example.ru/ping"
 export HC_PING_API="ваш_ключ"
 ```
 
@@ -45,7 +45,7 @@ chmod +x hc.sh
 
 ```bash
 # Задать переменные ДО подключения
-export HC_BASE_URL="https://hc.t8.ru/ping"
+export HC_BASE_URL="https://hc.example.ru/ping"
 export HC_PING_API="ваш_ключ"
 source ./hc.sh
 
@@ -67,7 +67,7 @@ check_fail my-slug
 set -Eeuo pipefail
 
 source ./log.sh
-export HC_BASE_URL="https://hc.t8.ru/ping"
+export HC_BASE_URL="https://hc.example.ru/ping"
 export HC_PING_API="qpljt3jgl2inp8lkya6h1a"
 source ./hc.sh
 

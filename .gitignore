@@ -44,5 +44,5 @@ Thumbs.db
 # Кеш-директория
 cache/
 
-# Промпт
-#*prompt*
+# Minn
+main.sh
