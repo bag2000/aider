@@ -37,7 +37,7 @@ _send_hc() {
         url="${url}/${action}"
     fi
     
-    log_info "Отправка heartbeat: ${url}"
+    log_info "Отправка healthcheck: ${url}"
     
     # Используем curl с таймаутом
     if curl -fsS --max-time 10 -X GET "${url}" > /dev/null 2>&1; then
