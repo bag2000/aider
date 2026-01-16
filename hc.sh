@@ -15,11 +15,45 @@ source "${SCRIPT_DIR}/log.sh"
 : "${BASE_URL:=http://localhost}"
 : "${PING_API:=/api/health}"
 
+# Вспомогательная функция для отправки ping в Healthchecks.io
+_send_ping() {
+    local suffix="${1:-}"
+    # Формируем URL: BASE_URL/PING_API[/suffix]
+    local ping_url="${BASE_URL%/}/${PING_API#/}"
+    if [[ -n "${suffix}" ]]; then
+        ping_url="${ping_url}/${suffix}"
+    fi
+    
+    log_info "Отправляем ping на ${ping_url}"
+    
+    if command -v curl &> /dev/null; then
+        if curl -s -f --max-time 10 "${ping_url}" > /dev/null; then
+            return 0
+        else
+            return 1
+        fi
+    elif command -v wget &> /dev/null; then
+        if wget -q --timeout=10 --tries=1 -O /dev/null "${ping_url}" 2>/dev/null; then
+            return 0
+        else
+            return 1
+        fi
+    else
+        log_error "Не найдены curl или wget для отправки ping"
+        return 2
+    fi
+}
+
 # Функция для начала проверки
 check_start() {
     local slug="$1"
     log_info "Начинаем проверку: ${slug}"
-    # Здесь можно добавить дополнительную логику
+    # Отправляем стартовый ping
+    if _send_ping "start"; then
+        log_info "Стартовый ping отправлен успешно"
+    else
+        log_error "Не удалось отправить стартовый ping"
+    fi
     echo "Проверка ${slug} запущена"
 }
 
@@ -27,7 +61,12 @@ check_start() {
 check_success() {
     local slug="$1"
     log_success "Проверка успешно завершена: ${slug}"
-    # Здесь можно добавить дополнительную логику
+    # Отправляем успешный ping
+    if _send_ping; then
+        log_info "Успешный ping отправлен"
+    else
+        log_error "Не удалось отправить успешный ping"
+    fi
     echo "Проверка ${slug} прошла успешно"
 }
 
@@ -36,7 +75,12 @@ check_fail() {
     local slug="$1"
     local reason="${2:-Неизвестная ошибка}"
     log_error "Проверка завершилась неудачей: ${slug} - ${reason}"
-    # Здесь можно добавить дополнительную логику
+    # Отправляем ping о неудаче
+    if _send_ping "fail"; then
+        log_info "Ping о неудаче отправлен"
+    else
+        log_error "Не удалось отправить ping о неудаче"
+    fi
     echo "Проверка ${slug} не удалась: ${reason}"
     exit 1
 }
@@ -101,5 +145,5 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 # Экспортируем функции для использования в других скриптах
-export -f check_start check_success check_fail perform_healthcheck
+export -f check_start check_success check_fail perform_healthcheck _send_ping
 export BASE_URL PING_API
