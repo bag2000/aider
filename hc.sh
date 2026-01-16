@@ -23,17 +23,19 @@ else
 fi
 
 # Базовый URL сервиса Healthchecks
-: "${BASE_URL:="https://hc.t8.ru/ping"}"
+: "${HC_BASE_URL:="https://hc.t8.ru/ping"}"
 # API ключ (ping API) - должен быть задан явно
-: "${PING_API:=}"
+: "${HC_PING_API:=}"
+# DNS override для curl (например, "192.168.1.1:443:hc.t8.ru")
+: "${HC_DNS:=}"
 
-# Проверяем, что PING_API не пустой
-if [[ -z "${PING_API}" ]]; then
+# Проверяем, что HC_PING_API не пустой
+if [[ -z "${HC_PING_API}" ]]; then
     # Используем log_error, если log.sh подключен, иначе echo
     if command -v log_error >/dev/null 2>&1; then
-        log_error "Переменная PING_API не задана. Задайте её перед использованием скрипта."
+        log_error "Переменная HC_PING_API не задана. Задайте её перед использованием скрипта."
     else
-        echo "[ERROR] Переменная PING_API не задана. Задайте её перед использованием скрипта." >&2
+        echo "[ERROR] Переменная HC_PING_API не задана. Задайте её перед использованием скрипта." >&2
     fi
     exit 1
 fi
@@ -42,7 +44,7 @@ fi
 _send_hc() {
     local slug="$1"
     local action="${2:-}"  # success, fail, start или пусто для обычного ping
-    local url="${BASE_URL}/${PING_API}/${slug}"
+    local url="${HC_BASE_URL}/${HC_PING_API}/${slug}"
     
     if [[ -n "${action}" ]]; then
         url="${url}/${action}"
@@ -50,8 +52,21 @@ _send_hc() {
     
     log_info "Отправка healthcheck: ${url}"
     
+    # Подготавливаем аргументы curl
+    local curl_args=()
+    curl_args+=(-fsS)
+    curl_args+=(--max-time 10)
+    curl_args+=(-X GET)
+    
+    # Добавляем --resolve, если HC_DNS задан
+    if [[ -n "${HC_DNS}" ]]; then
+        curl_args+=(--resolve "${HC_DNS}")
+    fi
+    
+    curl_args+=("${url}")
+    
     # Используем curl с таймаутом
-    if curl -fsS --max-time 10 -X GET "${url}" > /dev/null 2>&1; then
+    if curl "${curl_args[@]}" > /dev/null 2>&1; then
         log_success "Heartbeat отправлен успешно (${slug}${action:+/${action}})"
         return 0
     else

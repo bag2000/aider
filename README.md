@@ -28,7 +28,7 @@ log_error "Ошибка"
 
 Перед использованием **обязательно** задайте переменную окружения:
 ```bash
-export PING_API="ваш_ключ"
+export HC_PING_API="ваш_ключ"
 ```
 
 ### Использование как отдельный скрипт
@@ -54,8 +54,9 @@ check_fail my-slug
 ```
 
 ### Переменные окружения
-- `PING_API` – ключ API (обязательно)
-- `BASE_URL` – базовый URL (по умолчанию `https://hc.t8.ru/ping`)
+- `HC_PING_API` – ключ API (обязательно)
+- `HC_BASE_URL` – базовый URL (по умолчанию `https://hc.t8.ru/ping`)
+- `HC_DNS` – DNS override для curl (например `192.168.1.1:443:hc.t8.ru`, необязательно)
 
 ## Пример
 
@@ -64,7 +65,7 @@ check_fail my-slug
 set -Eeuo pipefail
 
 source ./log.sh
-export PING_API="qpljt3jgl2inp8lkya6h1a"
+export HC_PING_API="qpljt3jgl2inp8lkya6h1a"
 source ./hc.sh
 
 log_info "Начинаем задачу"
