@@ -5,8 +5,8 @@
 set -Eeuo pipefail
 
 # Путь к файлу лога по умолчанию
-# Можно переопределить перед подключением скрипта
-: "${LOG_PATH:=/var/log/myapp/script.log}"
+# По умолчанию создаём logs/script.log в текущем каталоге
+: "${LOG_PATH:=$(pwd)/logs/script.log}"
 
 # Создаём директорию для логов, если её нет
 mkdir -p "$(dirname "${LOG_PATH}")"
