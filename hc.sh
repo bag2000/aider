@@ -47,7 +47,8 @@ perform_healthcheck() {
     check_start "${slug}"
     
     # Формируем URL для проверки
-    local health_url="${BASE_URL}${PING_API}"
+    # Удаляем конечный слеш из BASE_URL и начальный слеш из PING_API
+    local health_url="${BASE_URL%/}/${PING_API#/}"
     
     log_info "Выполняем запрос к ${health_url}"
     
