@@ -45,7 +45,7 @@ sudo chown "${BACKUP_POSTGRES_USER}:${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_
 
 # Определение имени файла бекапа
 if [[ "${TARGET}" == "alldb" ]]; then
-    BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_alldb.tar.gz"
+    BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_alldb.gz"
     log_info "Начинаю бекап всех баз данных в ${BACKUP_FILE}"
     
     # Выполнение pg_dumpall
@@ -58,7 +58,7 @@ if [[ "${TARGET}" == "alldb" ]]; then
 else
     # Бекап конкретной базы данных
     DB_NAME="${TARGET}"
-    BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_${DB_NAME}.tar.gz"
+    BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_${DB_NAME}.gz"
     log_info "Начинаю бекап базы данных '${DB_NAME}' в ${BACKUP_FILE}"
     
     # Проверка существования базы данных (опционально)
