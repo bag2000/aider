@@ -48,7 +48,7 @@ if [[ "${TARGET}" == "alldb" ]]; then
     log_info "Начинаю бекап всех баз данных в ${BACKUP_FILE}"
     
     # Выполнение pg_dumpall
-    if sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN_ALL}" | gzip > "${BACKUP_FILE}"; then
+    if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN_ALL}") | gzip > "${BACKUP_FILE}"; then
         log_success "Бекап всех баз успешно создан"
     else
         log_error "Ошибка при создании бекапа всех баз"
@@ -62,7 +62,7 @@ else
     
     # Проверка существования базы данных (опционально)
     # Выполнение pg_dump
-    if sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN}" "${DB_NAME}" | gzip > "${BACKUP_FILE}"; then
+    if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN}" "${DB_NAME}") | gzip > "${BACKUP_FILE}"; then
         log_success "Бекап базы '${DB_NAME}' успешно создан"
     else
         log_error "Ошибка при создании бекапа базы '${DB_NAME}'"
