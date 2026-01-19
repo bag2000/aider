@@ -44,9 +44,8 @@ sudo mkdir -p "${BACKUP_DIR}" || {
 sudo chown "${PG_USER}:${PG_USER}" "${BACKUP_DIR}" 2>/dev/null || true
 
 # Определение имени файла бекапа
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 if [[ "${TARGET}" == "alldb" ]]; then
-    BACKUP_FILE="${BACKUP_DIR}/dump_alldb_${TIMESTAMP}.tar.gz"
+    BACKUP_FILE="${BACKUP_DIR}/dump_alldb.tar.gz"
     log_info "Начинаю бекап всех баз данных в ${BACKUP_FILE}"
     
     # Выполнение pg_dumpall
@@ -59,7 +58,7 @@ if [[ "${TARGET}" == "alldb" ]]; then
 else
     # Бекап конкретной базы данных
     DB_NAME="${TARGET}"
-    BACKUP_FILE="${BACKUP_DIR}/dump_${DB_NAME}_${TIMESTAMP}.tar.gz"
+    BACKUP_FILE="${BACKUP_DIR}/dump_${DB_NAME}.tar.gz"
     log_info "Начинаю бекап базы данных '${DB_NAME}' в ${BACKUP_FILE}"
     
     # Проверка существования базы данных (опционально)
