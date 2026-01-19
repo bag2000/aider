@@ -72,7 +72,7 @@ fi
 
 # Проверка целостности бекапа
 log_info "Проверка целостности бекапа..."
-if gunzip -c "${BACKUP_FILE}" | grep -m1 "CREATE TABLE" > /dev/null 2>&1; then
+if gunzip -c "${BACKUP_FILE}" 2>/dev/null | grep -E '^CREATE TABLE' > /dev/null 2>&1; then
     log_success "Бекап содержит данные (найдена CREATE TABLE)"
 else
     log_error "Бекап не содержит ожидаемых данных (CREATE TABLE не найдена)"
