@@ -97,28 +97,3 @@ BACKUP_POSTGRES_DIR="/bak/db"                     # директория для 
 ### Логирование
 
 Скрипт использует `log.sh` для вывода сообщений в терминал и файл лога.
-
-## Пример
-
-```bash
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-source ./log.sh
-export HC_BASE_URL="https://hc.example.ru/ping"
-export HC_PING_API="qpljt3jgl2inp8lkya6h1a"
-source ./hc.sh
-
-log_info "Начинаем задачу"
-check_start "backup-job"
-
-# выполнение задачи...
-
-if [ $? -eq 0 ]; then
-    check_success "backup-job"
-    log_success "Задача завершена"
-else
-    check_fail "backup-job"
-    log_error "Задача не удалась"
-fi
-```
