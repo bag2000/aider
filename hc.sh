@@ -26,7 +26,7 @@ fi
 : "${HC_BASE_URL:=}"
 # API ключ (ping API) - обязательный
 : "${HC_PING_API:=}"
-# DNS override для curl (например, "192.168.1.1:443:hc.t8.ru")
+# DNS override для curl (например, "192.168.1.1:443:hc.exam.ru")
 : "${HC_DNS:=}"
 
 # Проверяем, что HC_BASE_URL не пустой

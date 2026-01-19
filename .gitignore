@@ -43,6 +43,8 @@ Thumbs.db
 
 # Кеш-директория
 cache/
+*pycache*/
+*.pyc
 
 # Minn
 main.sh
