@@ -1,4 +1,4 @@
-# Логирование
+# Используй логирование
 source ./log.sh || { echo "Failed to load log.sh"; exit 1; }
 Функции логирования вместо echo:
   - log_info "текст"
