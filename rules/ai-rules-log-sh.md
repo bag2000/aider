@@ -1,12 +1,10 @@
-1. В начале каждого создаваемого скрипта добавь:
-  source ./log.sh || { echo "Failed to load log.sh"; exit 1; }
-2. Используй функции логирования вместо echo:
-     - Для информационных сообщений: log_info "текст"
-     - Для успешных операций: log_success "текст"
-     - Для ошибок: log_error "текст" (вывод в stderr)
-     - Для предупреждений: log_warn "текст" (вывод в stderr)
-3. Примеры:
-  - log_info "Начинаю обработку файла..."
-  - log_success "Файл обработан успешно"
-  - log_error "Файл не найден" && exit 1
-  - log_warn "Использую значение по умолчанию"
+# Логирование
+source ./log.sh || { echo "Failed to load log.sh"; exit 1; }
+Функции логирования вместо echo:
+  - log_info "текст"
+  - log_success "текст"
+  - log_error "текст" (stderr)
+  - log_warn "текст" (stderr)
+Примеры:
+  - log_info "Начинаю обработку..."
+  - log_error "Ошибка" && exit 1
