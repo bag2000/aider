@@ -11,6 +11,7 @@ __pycache__/
 # Logs
 *.log
 logs/*.log
+logs/*.info
 !logs/.gitkeep
 
 # IDE
@@ -46,5 +47,6 @@ cache/
 *pycache*/
 *.pyc
 
-# Minn
+# Main
 main.sh
+hc_create_main.sh
