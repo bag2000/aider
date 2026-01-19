@@ -88,10 +88,10 @@ check_fail my-slug
 
 Переменные в скрипте (можно отредактировать непосредственно в файле):
 ```bash
-PG_USER="postgres"                    # пользователь PostgreSQL
-PG_BIN="/usr/bin/pg_dump"            # путь к pg_dump
-PG_BIN_ALL="/usr/bin/pg_dumpall"     # путь к pg_dumpall
-BACKUP_DIR="/bak/db"                 # директория для бекапов
+BACKUP_POSTGRES_USER="postgres"                    # пользователь PostgreSQL
+BACKUP_POSTGRES_BIN="/usr/bin/pg_dump"            # путь к pg_dump
+BACKUP_POSTGRES_BIN_ALL="/usr/bin/pg_dumpall"     # путь к pg_dumpall
+BACKUP_POSTGRES_DIR="/bak/db"                     # директория для бекапов
 ```
 
 ### Логирование

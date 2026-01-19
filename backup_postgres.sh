@@ -6,10 +6,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
 # Конфигурация
-PG_USER="postgres"
-PG_BIN="/usr/bin/pg_dump"
-PG_BIN_ALL="/usr/bin/pg_dumpall"
-BACKUP_DIR="/bak/db"
+BACKUP_POSTGRES_USER="postgres"
+BACKUP_POSTGRES_BIN="/usr/bin/pg_dump"
+BACKUP_POSTGRES_BIN_ALL="/usr/bin/pg_dumpall"
+BACKUP_POSTGRES_DIR="/bak/db"
 
 # Функция для вывода справки
 show_help() {
@@ -36,20 +36,20 @@ fi
 TARGET="$1"
 
 # Создание директории для бекапов
-log_info "Создание директории для бекапов: ${BACKUP_DIR}"
-sudo mkdir -p "${BACKUP_DIR}" || {
-    log_error "Не удалось создать директорию ${BACKUP_DIR}"
+log_info "Создание директории для бекапов: ${BACKUP_POSTGRES_DIR}"
+sudo mkdir -p "${BACKUP_POSTGRES_DIR}" || {
+    log_error "Не удалось создать директорию ${BACKUP_POSTGRES_DIR}"
     exit 1
 }
-sudo chown "${PG_USER}:${PG_USER}" "${BACKUP_DIR}" 2>/dev/null || true
+sudo chown "${BACKUP_POSTGRES_USER}:${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_DIR}" 2>/dev/null || true
 
 # Определение имени файла бекапа
 if [[ "${TARGET}" == "alldb" ]]; then
-    BACKUP_FILE="${BACKUP_DIR}/dump_alldb.tar.gz"
+    BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_alldb.tar.gz"
     log_info "Начинаю бекап всех баз данных в ${BACKUP_FILE}"
     
     # Выполнение pg_dumpall
-    if sudo -u "${PG_USER}" "${PG_BIN_ALL}" | gzip > "${BACKUP_FILE}"; then
+    if sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN_ALL}" | gzip > "${BACKUP_FILE}"; then
         log_success "Бекап всех баз успешно создан"
     else
         log_error "Ошибка при создании бекапа всех баз"
@@ -58,12 +58,12 @@ if [[ "${TARGET}" == "alldb" ]]; then
 else
     # Бекап конкретной базы данных
     DB_NAME="${TARGET}"
-    BACKUP_FILE="${BACKUP_DIR}/dump_${DB_NAME}.tar.gz"
+    BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_${DB_NAME}.tar.gz"
     log_info "Начинаю бекап базы данных '${DB_NAME}' в ${BACKUP_FILE}"
     
     # Проверка существования базы данных (опционально)
     # Выполнение pg_dump
-    if sudo -u "${PG_USER}" "${PG_BIN}" "${DB_NAME}" | gzip > "${BACKUP_FILE}"; then
+    if sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN}" "${DB_NAME}" | gzip > "${BACKUP_FILE}"; then
         log_success "Бекап базы '${DB_NAME}' успешно создан"
     else
         log_error "Ошибка при создании бекапа базы '${DB_NAME}'"
