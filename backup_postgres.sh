@@ -71,9 +71,12 @@ else
     fi
 fi
 
+# Изменение прав доступа к файлу бекапа для чтения
+sudo chmod a+r "${BACKUP_FILE}" 2>/dev/null || true
+
 # Проверка целостности бекапа
 log_info "Проверка целостности бекапа..."
-if sudo gunzip -c "${BACKUP_FILE}" | grep -m1 "CREATE TABLE" > /dev/null 2>&1; then
+if gunzip -c "${BACKUP_FILE}" 2>/dev/null | grep -m1 "CREATE TABLE" > /dev/null 2>&1; then
     log_success "Бекап содержит данные (найдена CREATE TABLE)"
 else
     log_error "Бекап не содержит ожидаемых данных (CREATE TABLE не найдена)"
