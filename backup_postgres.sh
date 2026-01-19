@@ -8,7 +8,7 @@ source "${SCRIPT_DIR}/hc.sh" || { echo "Failed to load hc.sh"; exit 1; }
 
 # Конфигурация
 HC_NAME="navigator"
-HC_SLUG="${HC_NAME}-db-postgres-1"
+HC_SLUG="${HC_NAME}-db-postgres"
 PG_USER="postgres"
 PG_BIN="/usr/bin/pg_dump"
 PG_BIN_ALL="/usr/bin/pg_dumpall"
