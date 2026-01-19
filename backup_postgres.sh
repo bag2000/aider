@@ -41,7 +41,6 @@ sudo mkdir -p "${BACKUP_POSTGRES_DIR}" || {
     log_error "Не удалось создать директорию ${BACKUP_POSTGRES_DIR}"
     exit 1
 }
-sudo chown "${BACKUP_POSTGRES_USER}:${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_DIR}" 2>/dev/null || true
 
 # Определение имени файла бекапа
 if [[ "${TARGET}" == "alldb" ]]; then
@@ -71,12 +70,9 @@ else
     fi
 fi
 
-# Изменение прав доступа к файлу бекапа для чтения
-sudo chmod a+r "${BACKUP_FILE}" 2>/dev/null || true
-
 # Проверка целостности бекапа
 log_info "Проверка целостности бекапа..."
-if gunzip -c "${BACKUP_FILE}" 2>/dev/null | grep -m1 "CREATE TABLE" > /dev/null 2>&1; then
+if gunzip -c "${BACKUP_FILE}" | grep -m1 "CREATE TABLE"; then
     log_success "Бекап содержит данные (найдена CREATE TABLE)"
 else
     log_error "Бекап не содержит ожидаемых данных (CREATE TABLE не найдена)"
