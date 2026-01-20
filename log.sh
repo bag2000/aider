@@ -7,25 +7,33 @@ set -Eeuo pipefail
 # Путь к файлу лога
 # По умолчанию: logs/script.log в текущем рабочем каталоге
 # Можно переопределить перед подключением скрипта
-: "${LOG_PATH:=$(pwd)/logs/script.log}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+: "${LOG_PATH:=$SCRIPT_DIR/logs/script.log}"
 
 # Создаём директорию для логов, если её нет
 mkdir -p "$(dirname "${LOG_PATH}")"
 
-# Цвета для вывода в терминал (если поддерживается)
-if [[ -t 1 ]] && [[ -t 2 ]]; then
-    readonly COLOR_RESET="\033[0m"
-    readonly COLOR_RED="\033[31m"
-    readonly COLOR_GREEN="\033[32m"
-    readonly COLOR_YELLOW="\033[33m"
-    readonly COLOR_BLUE="\033[34m"
-else
-    readonly COLOR_RESET=""
-    readonly COLOR_RED=""
-    readonly COLOR_GREEN=""
-    readonly COLOR_YELLOW=""
-    readonly COLOR_BLUE=""
-fi
+# # Цвета для вывода в терминал (если поддерживается)
+# if [[ -t 1 ]] && [[ -t 2 ]]; then
+#     readonly COLOR_RESET="\033[0m"
+#     readonly COLOR_RED="\033[31m"
+#     readonly COLOR_GREEN="\033[32m"
+#     readonly COLOR_YELLOW="\033[33m"
+#     readonly COLOR_BLUE="\033[34m"
+# else
+#     readonly COLOR_RESET=""
+#     readonly COLOR_RED=""
+#     readonly COLOR_GREEN=""
+#     readonly COLOR_YELLOW=""
+#     readonly COLOR_BLUE=""
+# fi
+COLOR_RESET="\033[0m"
+COLOR_RED="\033[31m"
+COLOR_GREEN="\033[32m"
+COLOR_YELLOW="\033[33m"
+COLOR_BLUE="\033[34m"
+
+
 
 # Функция для записи в файл лога
 _log_to_file() {

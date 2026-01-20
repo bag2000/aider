@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+source ./.env
 # Скрипт для создания healthcheck через API
 # Можно использовать как отдельный скрипт или подключать через source
 
@@ -16,16 +17,6 @@ else
     log_info() { echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $*"; }
     log_error() { echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2; }
 fi
-
-# Конфигурация
-HC_CREATE_NAME="test"
-HC_CREATE_API_URL="https://hc.t8.ru/api/v3/checks/"
-HC_CREATE_API_TOKEN="hcw_0CJLKZQGcMQe4OGC9ws5qP4sJnjb"
-HC_CREATE_CHANNELS="319329f7-0060-4219-8fd8-6f8a1d1f2258,abbddf53-8bf5-47bf-bc85-e79d99d08c70"
-HC_CREATE_DESCRIPTION="Тестовое описание"
-HC_CREATE_TAGS="prod test"
-HC_CREATE_TIMEOUT=86400
-HC_CREATE_GRACE=60
 
 # Файл для хранения ID созданного чека
 ID_FILE=".id_healthcheck"
@@ -107,7 +98,7 @@ EOF
 }
 
 # Основная функция
-main() {
+create_healthcheck_main() {
     log_info "Проверка наличия файла ${ID_FILE}"
 
     if [ -f "${ID_FILE}" ]; then

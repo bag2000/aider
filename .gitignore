@@ -27,6 +27,7 @@ Thumbs.db
 # Configurations
 *.local
 *.env
+*.id_healthcheck
 
 # Backups
 *.bak

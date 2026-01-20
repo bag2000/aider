@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
+source ./.env
+
 set -Eeuo pipefail
 
 # Загрузка библиотеки логирования
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
-
-# Конфигурация
-BACKUP_POSTGRES_USER="postgres"
-BACKUP_POSTGRES_BIN="/usr/bin/pg_dump"
-BACKUP_POSTGRES_BIN_ALL="/usr/bin/pg_dumpall"
-BACKUP_POSTGRES_DIR="/bak/db"
 
 # Функция для вывода справки
 show_help() {

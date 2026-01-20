@@ -39,6 +39,9 @@ chmod +x hc.sh
 ./hc.sh check_success my-slug
 ./hc.sh check_start my-slug
 ./hc.sh check_fail my-slug
+
+# Читает uid из .id_healthcheck
+./hc.sh check_from_file success "Задание выполнено"
 ```
 
 ### Использование через source
