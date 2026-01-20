@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+source ./.env
+
 # Healthchecks скрипт для отправки уведомлений в Healthchecks.io
 # Использование:
 #   ./hc.sh check_success SLUG
@@ -10,16 +12,10 @@ set -Eeuo pipefail
 if [[ -f "$(dirname "${BASH_SOURCE[0]}")/log.sh" ]]; then
     # shellcheck source=./log.sh
     source "$(dirname "${BASH_SOURCE[0]}")/log.sh"
-elif [[ -f "/linux/log.sh" ]]; then
-    # альтернативный путь
-    # shellcheck source=/linux/log.sh
-    source "/linux/log.sh"
 else
     # Фолбэк функции, если log.sh не найден
-    log_info() { echo "[INFO] $*"; }
-    log_success() { echo "[SUCCESS] $*"; }
-    log_error() { echo "[ERROR] $*" >&2; }
-    log_warn() { echo "[WARN] $*" >&2; }
+    echo "log.sh не найден"
+    exit 1
 fi
 
 # Базовый URL сервиса Healthchecks (обязательный)
@@ -32,7 +28,7 @@ fi
 # Проверяем, что HC_BASE_URL не пустой
 if [[ -z "${HC_BASE_URL}" ]]; then
     if command -v log_error >/dev/null 2>&1; then
-        log_error "Переменная HC_BASE_URL не задана. Задайте её перед использованием скрипта."
+        log_error "[$HC_LOGNAME] Переменная HC_BASE_URL не задана. Задайте её перед использованием скрипта."
     else
         echo "[ERROR] Переменная HC_BASE_URL не задана. Задайте её перед использованием скрипта." >&2
     fi
@@ -43,7 +39,7 @@ fi
 if [[ -z "${HC_PING_API}" ]]; then
     # Используем log_error, если log.sh подключен, иначе echo
     if command -v log_error >/dev/null 2>&1; then
-        log_error "Переменная HC_PING_API не задана. Задайте её перед использованием скрипта."
+        log_error "[$HC_LOGNAME] Переменная HC_PING_API не задана. Задайте её перед использованием скрипта."
     else
         echo "[ERROR] Переменная HC_PING_API не задана. Задайте её перед использованием скрипта." >&2
     fi
@@ -60,7 +56,7 @@ _send_hc() {
         url="${url}/${action}"
     fi
     
-    log_info "Отправка healthcheck: ${url}"
+    log_info "[$HC_LOGNAME] Отправка healthcheck: ${url}"
     
     # Подготавливаем аргументы curl
     local curl_args=()
@@ -77,10 +73,10 @@ _send_hc() {
     
     # Используем curl с таймаутом
     if curl "${curl_args[@]}" > /dev/null 2>&1; then
-        log_success "Healthchecks отправлен успешно (${slug}${action:+/${action}})"
+        log_success "[$HC_LOGNAME] Healthchecks отправлен успешно (${slug}${action:+/${action}})"
         return 0
     else
-        log_error "Не удалось отправить Healthchecks (${slug}${action:+/${action}})"
+        log_error "[$HC_LOGNAME] Не удалось отправить Healthchecks (${slug}${action:+/${action}})"
         return 1
     fi
 }
@@ -125,7 +121,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             check_fail "${slug}"
             ;;
         *)
-            log_error "Неизвестное действие: ${action}"
+            log_error "[$HC_LOGNAME] Неизвестное действие: ${action}"
             echo "Допустимые действия: check_success, check_start, check_fail" >&2
             exit 1
             ;;
