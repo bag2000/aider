@@ -56,7 +56,9 @@ _send_hc() {
     # UUID формат: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     if [[ "${slug}" =~ ^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$ ]]; then
         # Если slug - UUID, используем URL для ping по UUID
-        local url="${HC_BASE_URL}/ping/${slug}"
+        # Убедимся, что HC_BASE_URL не заканчивается на /ping
+        local base_url="${HC_BASE_URL%/ping}"
+        local url="${base_url}/ping/${slug}"
     else
         # Иначе используем старый формат с HC_PING_API
         local url="${HC_BASE_URL}/${HC_PING_API}/${slug}"
