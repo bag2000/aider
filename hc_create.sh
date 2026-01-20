@@ -72,8 +72,20 @@ EOF
         return 1
     fi
 
-    # Извлечение ID из ответа (предполагаем, что ответ в JSON и содержит поле "id")
+    # Извлечение UUID из ответа (API возвращает поле "uuid")
     local check_id
+    # Пробуем извлечь "uuid" из JSON
+    if check_id=$(echo "${response}" | grep -o '"uuid":"[^"]*"' | head -1 | cut -d'"' -f4); then
+        if [ -n "${check_id}" ]; then
+            echo "${check_id}" > "${ID_FILE}"
+            log_info "Чек успешно создан с UUID: ${check_id}"
+            log_info "UUID сохранён в файл: ${ID_FILE}"
+            return 0
+        fi
+    fi
+
+    # Если не удалось извлечь UUID, попробуем другой подход
+    # Иногда API может возвращать поле "id" или "check_id"
     if check_id=$(echo "${response}" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4); then
         if [ -n "${check_id}" ]; then
             echo "${check_id}" > "${ID_FILE}"
@@ -83,9 +95,9 @@ EOF
         fi
     fi
 
-    # Если не удалось извлечь ID, попробуем другой подход
+    # Если всё ещё не удалось, выведем ответ для отладки
     log_info "Ответ API: ${response}"
-    log_error "Не удалось извлечь ID чека из ответа API"
+    log_error "Не удалось извлечь UUID/ID чека из ответа API"
     return 1
 }
 
