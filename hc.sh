@@ -8,15 +8,9 @@ source ./.env
 
 set -Eeuo pipefail
 
-# Подключаем логирование, если файл существует
-if [[ -f "$(dirname "${BASH_SOURCE[0]}")/log.sh" ]]; then
-    # shellcheck source=./log.sh
-    source "$(dirname "${BASH_SOURCE[0]}")/log.sh"
-else
-    # Фолбэк функции, если log.sh не найден
-    echo "log.sh не найден"
-    exit 1
-fi
+# Загрузка библиотеки логирования
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
 # Базовый URL сервиса Healthchecks (обязательный)
 : "${HC_BASE_URL:=}"
