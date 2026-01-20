@@ -111,32 +111,93 @@ check_fail() {
     _send_hc "${slug}" "fail" "${message}"
 }
 
+# Отправка чека из файла .id_healthcheck
+check_from_file() {
+    local action="${1:-}"  # success, start, fail или пусто для обычного ping
+    local message="${2:-}"
+    local id_file=".id_healthcheck"
+    
+    if [[ ! -f "${id_file}" ]]; then
+        log_error "[$HC_LOGNAME] Файл ${id_file} не найден. Сначала создайте чек с помощью hc_create.sh"
+        return 1
+    fi
+    
+    local slug
+    slug=$(cat "${id_file}" 2>/dev/null | head -n1 | tr -d '[:space:]')
+    
+    if [[ -z "${slug}" ]]; then
+        log_error "[$HC_LOGNAME] Файл ${id_file} пуст или содержит неверные данные"
+        return 1
+    fi
+    
+    case "${action}" in
+        success|"")
+            _send_hc "${slug}" "" "${message}"
+            ;;
+        start)
+            _send_hc "${slug}" "start" "${message}"
+            ;;
+        fail)
+            _send_hc "${slug}" "fail" "${message}"
+            ;;
+        *)
+            log_error "[$HC_LOGNAME] Неизвестное действие для check_from_file: ${action}"
+            return 1
+            ;;
+    esac
+}
+
 # Если скрипт запущен напрямую (не через source)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    if [[ $# -lt 2 ]]; then
-        echo "Использование: $0 {check_success|check_start|check_fail} SLUG [\"ТЕКСТ СООБЩЕНИЯ\"]" >&2
-        echo "Пример: $0 check_success navigator-db-backup-postgres-1" >&2
-        echo "Пример с текстом: $0 check_success navigator-db-backup-postgres-1 \"Резервное копирование завершено успешно\"" >&2
+    if [[ $# -lt 1 ]]; then
+        echo "Использование: $0 {check_success|check_start|check_fail|check_from_file} [SLUG|ACTION] [\"ТЕКСТ СООБЩЕНИЯ\"]" >&2
+        echo "Примеры:" >&2
+        echo "  $0 check_success navigator-db-backup-postgres-1" >&2
+        echo "  $0 check_success navigator-db-backup-postgres-1 \"Резервное копирование завершено успешно\"" >&2
+        echo "  $0 check_from_file success \"Задание выполнено\"" >&2
+        echo "  $0 check_from_file start" >&2
+        echo "  $0 check_from_file fail \"Произошла ошибка\"" >&2
         exit 1
     fi
     
     action="$1"
-    slug="$2"
-    message="${3:-}"
     
     case "${action}" in
         check_success)
+            if [[ $# -lt 2 ]]; then
+                echo "Использование: $0 check_success SLUG [\"ТЕКСТ СООБЩЕНИЯ\"]" >&2
+                exit 1
+            fi
+            slug="$2"
+            message="${3:-}"
             check_success "${slug}" "${message}"
             ;;
         check_start)
+            if [[ $# -lt 2 ]]; then
+                echo "Использование: $0 check_start SLUG [\"ТЕКСТ СООБЩЕНИЯ\"]" >&2
+                exit 1
+            fi
+            slug="$2"
+            message="${3:-}"
             check_start "${slug}" "${message}"
             ;;
         check_fail)
+            if [[ $# -lt 2 ]]; then
+                echo "Использование: $0 check_fail SLUG [\"ТЕКСТ СООБЩЕНИЯ\"]" >&2
+                exit 1
+            fi
+            slug="$2"
+            message="${3:-}"
             check_fail "${slug}" "${message}"
+            ;;
+        check_from_file)
+            sub_action="${2:-success}"
+            message="${3:-}"
+            check_from_file "${sub_action}" "${message}"
             ;;
         *)
             log_error "[$HC_LOGNAME] Неизвестное действие: ${action}"
-            echo "Допустимые действия: check_success, check_start, check_fail" >&2
+            echo "Допустимые действия: check_success, check_start, check_fail, check_from_file" >&2
             exit 1
             ;;
     esac
