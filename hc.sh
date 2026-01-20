@@ -3,8 +3,8 @@ source ./.env
 
 # Healthchecks скрипт для отправки уведомлений в Healthchecks.io
 # Использование:
-#   ./hc.sh check_success SLUG
-#   source ./hc.sh && check_success SLUG
+#   ./hc.sh check_success SLUG ["ТЕКСТ СООБЩЕНИЯ"]
+#   source ./hc.sh && check_success SLUG ["ТЕКСТ СООБЩЕНИЯ"]
 
 set -Eeuo pipefail
 
@@ -50,6 +50,7 @@ fi
 _send_hc() {
     local slug="$1"
     local action="${2:-}"  # success, fail, start или пусто для обычного ping
+    local message="${3:-}" # необязательное текстовое сообщение
     local url="${HC_BASE_URL}/${HC_PING_API}/${slug}"
     
     if [[ -n "${action}" ]]; then
@@ -62,11 +63,19 @@ _send_hc() {
     local curl_args=()
     curl_args+=(-fsS)
     curl_args+=(--max-time 10)
-    curl_args+=(-X GET)
     
     # Добавляем --resolve, если HC_DNS задан
     if [[ -n "${HC_DNS}" ]]; then
         curl_args+=(--resolve "${HC_DNS}")
+    fi
+    
+    # Если есть сообщение, отправляем POST с телом, иначе GET
+    if [[ -n "${message}" ]]; then
+        curl_args+=(-X POST)
+        curl_args+=(--data-raw "${message}")
+        log_info "[$HC_LOGNAME] С текстом: ${message}"
+    else
+        curl_args+=(-X GET)
     fi
     
     curl_args+=("${url}")
@@ -84,41 +93,46 @@ _send_hc() {
 # Успешное выполнение
 check_success() {
     local slug="$1"
-    _send_hc "${slug}" ""          # обычный ping для успеха
+    local message="${2:-}"
+    _send_hc "${slug}" "" "${message}"          # обычный ping для успеха
 }
 
 # Начало выполнения
 check_start() {
     local slug="$1"
-    _send_hc "${slug}" "start"
+    local message="${2:-}"
+    _send_hc "${slug}" "start" "${message}"
 }
 
 # Ошибка выполнения
 check_fail() {
     local slug="$1"
-    _send_hc "${slug}" "fail"
+    local message="${2:-}"
+    _send_hc "${slug}" "fail" "${message}"
 }
 
 # Если скрипт запущен напрямую (не через source)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if [[ $# -lt 2 ]]; then
-        echo "Использование: $0 {check_success|check_start|check_fail} SLUG" >&2
+        echo "Использование: $0 {check_success|check_start|check_fail} SLUG [\"ТЕКСТ СООБЩЕНИЯ\"]" >&2
         echo "Пример: $0 check_success navigator-db-backup-postgres-1" >&2
+        echo "Пример с текстом: $0 check_success navigator-db-backup-postgres-1 \"Резервное копирование завершено успешно\"" >&2
         exit 1
     fi
     
     action="$1"
     slug="$2"
+    message="${3:-}"
     
     case "${action}" in
         check_success)
-            check_success "${slug}"
+            check_success "${slug}" "${message}"
             ;;
         check_start)
-            check_start "${slug}"
+            check_start "${slug}" "${message}"
             ;;
         check_fail)
-            check_fail "${slug}"
+            check_fail "${slug}" "${message}"
             ;;
         *)
             log_error "[$HC_LOGNAME] Неизвестное действие: ${action}"
