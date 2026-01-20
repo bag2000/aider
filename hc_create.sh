@@ -136,5 +136,5 @@ create_healthcheck_main() {
 
 # Если скрипт запущен напрямую, а не подключен через source
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
+    create_healthcheck_main "$@"
 fi
