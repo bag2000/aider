@@ -51,7 +51,16 @@ _send_hc() {
     local slug="$1"
     local action="${2:-}"  # success, fail, start или пусто для обычного ping
     local message="${3:-}" # необязательное текстовое сообщение
-    local url="${HC_BASE_URL}/${HC_PING_API}/${slug}"
+    
+    # Определяем, является ли slug UUID (содержит дефисы и имеет длину 36 символов)
+    # UUID формат: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    if [[ "${slug}" =~ ^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$ ]]; then
+        # Если slug - UUID, используем URL для ping по UUID
+        local url="${HC_BASE_URL}/ping/${slug}"
+    else
+        # Иначе используем старый формат с HC_PING_API
+        local url="${HC_BASE_URL}/${HC_PING_API}/${slug}"
+    fi
     
     if [[ -n "${action}" ]]; then
         url="${url}/${action}"
