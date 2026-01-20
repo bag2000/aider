@@ -4,6 +4,19 @@
 
 set -Eeuo pipefail
 
+# Подключение логирования
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="${SCRIPT_DIR}/log.sh"
+if [ -f "${LOG_FILE}" ]; then
+    # shellcheck source=./log.sh
+    source "${LOG_FILE}" || { echo "Ошибка загрузки log.sh"; exit 1; }
+else
+    echo "Файл log.sh не найден в ${SCRIPT_DIR}. Логирование отключено."
+    # Заглушки функций логирования
+    log_info() { echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $*"; }
+    log_error() { echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2; }
+fi
+
 # Конфигурация
 HC_CREATE_NAME="test"
 HC_CREATE_API_URL="https://hc.t8.ru/api/v3/checks/"
@@ -16,15 +29,6 @@ HC_CREATE_GRACE=60
 
 # Файл для хранения ID созданного чека
 ID_FILE=".id_healthcheck"
-
-# Функция логирования
-log_info() {
-    echo "[INFO] $(date '+%Y-%m-%d %H:%M:%S') - $*"
-}
-
-log_error() {
-    echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') - $*" >&2
-}
 
 # Функция создания чека через API
 create_healthcheck() {
