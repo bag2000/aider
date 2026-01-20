@@ -48,7 +48,7 @@ create_healthcheck() {
 EOF
     )
 
-    log_info "Отправка запроса на создание чека: ${name}"
+    log_info "[$HC_CREATE_LOGNAME] Отправка запроса на создание чека: ${name}"
 
     # Отправка POST запроса
     local response
@@ -57,13 +57,13 @@ EOF
         -H "X-Api-Key: ${api_token}" \
         -d "${json_data}" \
         "${api_url}" 2>&1); then
-        log_error "Ошибка при выполнении curl: ${response}"
+        log_error "[$HC_CREATE_LOGNAME] Ошибка при выполнении curl: ${response}"
         return 1
     fi
 
     # Проверка ответа
     if echo "${response}" | grep -q "error"; then
-        log_error "API вернуло ошибку: ${response}"
+        log_error "[$HC_CREATE_LOGNAME] API вернуло ошибку: ${response}"
         return 1
     fi
 
@@ -74,8 +74,8 @@ EOF
     if check_id=$(echo "${response}" | grep -o '"uuid":\s*"[^"]*"' | head -1 | sed -E 's/"uuid":\s*"([^"]*)"/\1/'); then
         if [ -n "${check_id}" ]; then
             echo "${check_id}" > "${ID_FILE}"
-            log_info "Чек успешно создан с UUID: ${check_id}"
-            log_info "UUID сохранён в файл: ${ID_FILE}"
+            log_info "[$HC_CREATE_LOGNAME] Чек успешно создан с UUID: ${check_id}"
+            log_info "[$HC_CREATE_LOGNAME] UUID сохранён в файл: ${ID_FILE}"
             return 0
         fi
     fi
@@ -85,36 +85,36 @@ EOF
     if check_id=$(echo "${response}" | grep -o '"id":\s*"[^"]*"' | head -1 | sed -E 's/"id":\s*"([^"]*)"/\1/'); then
         if [ -n "${check_id}" ]; then
             echo "${check_id}" > "${ID_FILE}"
-            log_info "Чек успешно создан с ID: ${check_id}"
-            log_info "ID сохранён в файл: ${ID_FILE}"
+            log_info "[$HC_CREATE_LOGNAME] Чек успешно создан с ID: ${check_id}"
+            log_info "[$HC_CREATE_LOGNAME] ID сохранён в файл: ${ID_FILE}"
             return 0
         fi
     fi
 
     # Если всё ещё не удалось, выведем ответ для отладки
-    log_info "Ответ API: ${response}"
-    log_error "Не удалось извлечь UUID/ID чека из ответа API"
+    log_info "[$HC_CREATE_LOGNAME] Ответ API: ${response}"
+    log_error "[$HC_CREATE_LOGNAME] Не удалось извлечь UUID/ID чека из ответа API"
     return 1
 }
 
 # Основная функция
 create_healthcheck_main() {
-    log_info "Проверка наличия файла ${ID_FILE}"
+    log_info "[$HC_CREATE_LOGNAME] Проверка наличия файла ${ID_FILE}"
 
     if [ -f "${ID_FILE}" ]; then
         local existing_id
         existing_id=$(cat "${ID_FILE}" 2>/dev/null || echo "")
         if [ -n "${existing_id}" ]; then
-            log_info "Файл ${ID_FILE} уже существует с ID: ${existing_id}"
-            log_info "Создание чека пропущено"
+            log_info "[$HC_CREATE_LOGNAME] Файл ${ID_FILE} уже существует с ID: ${existing_id}"
+            log_info "[$HC_CREATE_LOGNAME] Создание чека пропущено"
             return 0
         else
-            log_info "Файл ${ID_FILE} существует, но пуст. Удаляем его."
+            log_info "[$HC_CREATE_LOGNAME] Файл ${ID_FILE} существует, но пуст. Удаляем его."
             rm -f "${ID_FILE}"
         fi
     fi
 
-    log_info "Файл ${ID_FILE} не найден. Создаём новый чек."
+    log_info "[$HC_CREATE_LOGNAME] Файл ${ID_FILE} не найден. Создаём новый чек."
 
     # Создание чека
     if create_healthcheck \
@@ -127,9 +127,9 @@ create_healthcheck_main() {
         "${HC_CREATE_API_URL}" \
         "${HC_CREATE_API_TOKEN}" \
         "${HC_CREATE_CHANNELS}"; then
-        log_info "Чек успешно создан"
+        log_info "[$HC_CREATE_LOGNAME] Чек успешно создан"
     else
-        log_error "Не удалось создать чек"
+        log_error "[$HC_CREATE_LOGNAME] Не удалось создать чек"
         return 1
     fi
 }

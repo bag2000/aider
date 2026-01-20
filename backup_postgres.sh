@@ -24,7 +24,7 @@ EOF
 
 # Проверка наличия параметра
 if [[ $# -ne 1 ]]; then
-    log_error "Требуется ровно один параметр"
+    log_error "[$BACKUP_POSTGRES_LOGNAME] Требуется ровно один параметр"
     show_help
     exit 1
 fi
@@ -32,55 +32,55 @@ fi
 TARGET="$1"
 
 # Создание директории для бекапов
-log_info "Создание директории для бекапов: ${BACKUP_POSTGRES_DIR}"
+log_info "[$BACKUP_POSTGRES_LOGNAME] Создание директории для бекапов: ${BACKUP_POSTGRES_DIR}"
 sudo mkdir -p "${BACKUP_POSTGRES_DIR}" || {
-    log_error "Не удалось создать директорию ${BACKUP_POSTGRES_DIR}"
+    log_error "[$BACKUP_POSTGRES_LOGNAME] Не удалось создать директорию ${BACKUP_POSTGRES_DIR}"
     exit 1
 }
 
 # Определение имени файла бекапа
 if [[ "${TARGET}" == "alldb" ]]; then
     BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_alldb.gz"
-    log_info "Начинаю бекап всех баз данных в ${BACKUP_FILE}"
+    log_info "[$BACKUP_POSTGRES_LOGNAME] Начинаю бекап всех баз данных в ${BACKUP_FILE}"
     
     # Выполнение pg_dumpall
     if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN_ALL}") | gzip > "${BACKUP_FILE}"; then
-        log_success "Бекап всех баз успешно создан"
+        log_success "[$BACKUP_POSTGRES_LOGNAME] Бекап всех баз успешно создан"
     else
-        log_error "Ошибка при создании бекапа всех баз"
+        log_error "[$BACKUP_POSTGRES_LOGNAME] Ошибка при создании бекапа всех баз"
         exit 1
     fi
 else
     # Бекап конкретной базы данных
     DB_NAME="${TARGET}"
     BACKUP_FILE="${BACKUP_POSTGRES_DIR}/dump_${DB_NAME}.gz"
-    log_info "Начинаю бекап базы данных '${DB_NAME}' в ${BACKUP_FILE}"
+    log_info "[$BACKUP_POSTGRES_LOGNAME] Начинаю бекап базы данных '${DB_NAME}' в ${BACKUP_FILE}"
     
     # Проверка существования базы данных (опционально)
     # Выполнение pg_dump
     if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" "${BACKUP_POSTGRES_BIN}" "${DB_NAME}") | gzip > "${BACKUP_FILE}"; then
-        log_success "Бекап базы '${DB_NAME}' успешно создан"
+        log_success "[$BACKUP_POSTGRES_LOGNAME] Бекап базы '${DB_NAME}' успешно создан"
     else
-        log_error "Ошибка при создании бекапа базы '${DB_NAME}'"
+        log_error "[$BACKUP_POSTGRES_LOGNAME] Ошибка при создании бекапа базы '${DB_NAME}'"
         exit 1
     fi
 fi
 
 # Проверка целостности бекапа
-log_info "Проверка целостности бекапа..."
+log_info "[$BACKUP_POSTGRES_LOGNAME] Проверка целостности бекапа..."
 if gunzip -c "${BACKUP_FILE}" 2>/dev/null | grep -E '^CREATE TABLE' > /dev/null 2>&1; then
-    log_success "Бекап содержит данные (найдена CREATE TABLE)"
+    log_success "[$BACKUP_POSTGRES_LOGNAME] Бекап содержит данные (найдена CREATE TABLE)"
 else
-    log_error "Бекап не содержит ожидаемых данных (CREATE TABLE не найдена)"
+    log_error "[$BACKUP_POSTGRES_LOGNAME] Бекап не содержит ожидаемых данных (CREATE TABLE не найдена)"
     exit 1
 fi
 
 # Проверка размера файла
 if [[ -f "${BACKUP_FILE}" ]]; then
     FILE_SIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
-    log_info "Файл бекапа создан: ${BACKUP_FILE} (размер: ${FILE_SIZE})"
+    log_info "[$BACKUP_POSTGRES_LOGNAME] Файл бекапа создан: ${BACKUP_FILE} (размер: ${FILE_SIZE})"
 else
-    log_warn "Файл бекапа не найден после операции"
+    log_warn "[$BACKUP_POSTGRES_LOGNAME] Файл бекапа не найден после операции"
 fi
 
 exit 0
