@@ -74,8 +74,9 @@ EOF
 
     # Извлечение UUID из ответа (API возвращает поле "uuid")
     local check_id
-    # Пробуем извлечь "uuid" из JSON
-    if check_id=$(echo "${response}" | grep -o '"uuid":"[^"]*"' | head -1 | cut -d'"' -f4); then
+    # Пробуем извлечь "uuid" из JSON, учитывая возможные пробелы
+    # Шаблон: "uuid": "значение"
+    if check_id=$(echo "${response}" | grep -o '"uuid":\s*"[^"]*"' | head -1 | sed -E 's/"uuid":\s*"([^"]*)"/\1/'); then
         if [ -n "${check_id}" ]; then
             echo "${check_id}" > "${ID_FILE}"
             log_info "Чек успешно создан с UUID: ${check_id}"
@@ -86,7 +87,7 @@ EOF
 
     # Если не удалось извлечь UUID, попробуем другой подход
     # Иногда API может возвращать поле "id" или "check_id"
-    if check_id=$(echo "${response}" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4); then
+    if check_id=$(echo "${response}" | grep -o '"id":\s*"[^"]*"' | head -1 | sed -E 's/"id":\s*"([^"]*)"/\1/'); then
         if [ -n "${check_id}" ]; then
             echo "${check_id}" > "${ID_FILE}"
             log_info "Чек успешно создан с ID: ${check_id}"
