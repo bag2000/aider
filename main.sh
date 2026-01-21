@@ -23,7 +23,7 @@ hc_ping_start "Начало резервного копирования"
 
 restic_check || main_check+="ОШИБКА restic check "
 
-if [ -n "$main_check" ]; then
+if [ -z "$main_check" ]; then
     hc_ping_success "Резервное копирование успешно завершено"
 else
     hc_ping_fail "$main_check"
