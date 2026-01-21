@@ -17,11 +17,11 @@ if [ "$day" -le 28 ]; then
     -p CPUQuota=100% \
     -p MemoryLimit=1G \
     -- restic \
+    check \
+    --read-data-subset $day/28 \
     -o rest.connections=20 \
     -r $RESTIC_REPO \
     --cache-dir $RESTIC_CACHE_DIR \
-    check / \
-    --read-data-subset $day/28 \
     &>> $LOG_PATH || {
         log_error "Ошибка при проверке репозитория $RESTIC_REPO"
         exit 1
