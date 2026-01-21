@@ -1,131 +1,67 @@
-#!/usr/bin/env bash
-source ./.env
-# Скрипт для создания healthcheck через API
-# Можно использовать как отдельный скрипт или подключать через source
+#!/bin/bash
 
-set -Eeuo pipefail
-
-# Загрузка библиотеки логирования
+# Определяем директорию скрипта для относительных путей
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Загружаем конфигурацию и функции логирования
+source "${SCRIPT_DIR}/.env" || { echo "Failed to load .env"; exit 1; }
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
-# Файл для хранения ID созданного чека
-ID_FILE=".id_healthcheck"
-
-# Функция создания чека через API
-create_healthcheck() {
-    local name="$1"
-    local slug="$2"
-    local tags="$3"
-    local desc="$4"
-    local timeout="$5"
-    local grace="$6"
-    local api_url="$7"
-    local api_token="$8"
-    local channels="$9"
-
-    # Подготовка данных для отправки
-    local json_data
+hc_create() {
+    # Формирование JSON данных для запроса
     json_data=$(cat <<EOF
 {
-    "name": "${name}",
-    "slug": "${slug}",
-    "tags": "${tags}",
-    "desc": "${desc}",
-    "timeout": ${timeout},
-    "grace": ${grace},
-    "channels": "${channels}"
+    "name": "${HC_CREATE_NAME}",
+    "slug": "${HC_CREATE_NAME}",
+    "tags": "${HC_CREATE_TAGS}",
+    "desc": "${HC_CREATE_DESC}",
+    "timeout": ${HC_CREATE_TIMEOUT},
+    "grace": ${HC_CREATE_GRACE},
+    "channels": "${HC_CREATE_CHANNELS}",
+    "unique" : ${HC_CREATE_UNIQUE}
 }
 EOF
     )
 
-    log_info "[$HC_CREATE_LOGNAME] Отправка запроса на создание чека: ${name}"
+    # Полный путь к файлу с UUID
+    ID_FILE_PATH="${SCRIPT_DIR}/${HC_CREATE_ID_FILE}"
 
-    # Отправка POST запроса
-    local response
-    if ! response=$(curl -s -X POST \
+    # Проверка существования файла с UUID
+    if [ -f "$ID_FILE_PATH" ]; then
+        log_info "[$HC_CREATE_LOGNAME] Файл $ID_FILE_PATH существует. Пропускаю создание чека $HC_CREATE_NAME"
+        return 0
+    fi
+
+    log_info "[$HC_CREATE_LOGNAME] Файл $ID_FILE_PATH не существует. Создаю чек $HC_CREATE_NAME"
+    
+    # Отправка POST запроса для создания чека
+    if ! response=$(curl --resolve $HC_CREATE_DNS -s -f -X POST \
         -H "Content-Type: application/json" \
-        -H "X-Api-Key: ${api_token}" \
+        -H "X-Api-Key: ${HC_CREATE_API_TOKEN}" \
         -d "${json_data}" \
-        "${api_url}" 2>&1); then
-        log_error "[$HC_CREATE_LOGNAME] Ошибка при выполнении curl: ${response}"
+        "${HC_CREATE_API_URL}" 2>&1); then
+        log_error "[$HC_CREATE_LOGNAME] Ошибка при выполнении curl"
         return 1
     fi
-
-    # Проверка ответа
-    if echo "${response}" | grep -q "error"; then
-        log_error "[$HC_CREATE_LOGNAME] API вернуло ошибку: ${response}"
+    
+    # Проверка ответа сервера
+    if [ -z "$response" ]; then
+        log_error "[$HC_CREATE_LOGNAME] Получен пустой ответ от сервера"
         return 1
     fi
-
-    # Извлечение UUID из ответа (API возвращает поле "uuid")
-    local check_id
-    # Пробуем извлечь "uuid" из JSON, учитывая возможные пробелы
-    # Шаблон: "uuid": "значение"
-    if check_id=$(echo "${response}" | grep -o '"uuid":\s*"[^"]*"' | head -1 | sed -E 's/"uuid":\s*"([^"]*)"/\1/'); then
-        if [ -n "${check_id}" ]; then
-            echo "${check_id}" > "${ID_FILE}"
-            log_info "[$HC_CREATE_LOGNAME] Чек успешно создан с UUID: ${check_id}"
-            log_info "[$HC_CREATE_LOGNAME] UUID сохранён в файл: ${ID_FILE}"
-            return 0
-        fi
+    
+    # Извлечение UUID из JSON ответа
+    uuid=$(echo "$response" | grep -o '"uuid": "[^"]*"' | cut -d'"' -f4)
+    
+    # Валидация извлеченного UUID
+    if [ -z "$uuid" ]; then
+        log_error "[$HC_CREATE_LOGNAME] Не удалось извлечь UUID из ответа"
+        return 1
     fi
-
-    # Если не удалось извлечь UUID, попробуем другой подход
-    # Иногда API может возвращать поле "id" или "check_id"
-    if check_id=$(echo "${response}" | grep -o '"id":\s*"[^"]*"' | head -1 | sed -E 's/"id":\s*"([^"]*)"/\1/'); then
-        if [ -n "${check_id}" ]; then
-            echo "${check_id}" > "${ID_FILE}"
-            log_info "[$HC_CREATE_LOGNAME] Чек успешно создан с ID: ${check_id}"
-            log_info "[$HC_CREATE_LOGNAME] ID сохранён в файл: ${ID_FILE}"
-            return 0
-        fi
-    fi
-
-    # Если всё ещё не удалось, выведем ответ для отладки
-    log_info "[$HC_CREATE_LOGNAME] Ответ API: ${response}"
-    log_error "[$HC_CREATE_LOGNAME] Не удалось извлечь UUID/ID чека из ответа API"
-    return 1
+    
+    # Сохранение UUID в файл для последующего использования
+    echo "$uuid" > "$ID_FILE_PATH"
+    log_info "[$HC_CREATE_LOGNAME] Чек создан, UUID сохранен: $uuid"
+    
+    return 0
 }
-
-# Основная функция
-create_healthcheck_main() {
-    log_info "[$HC_CREATE_LOGNAME] Проверка наличия файла ${ID_FILE}"
-
-    if [ -f "${ID_FILE}" ]; then
-        local existing_id
-        existing_id=$(cat "${ID_FILE}" 2>/dev/null || echo "")
-        if [ -n "${existing_id}" ]; then
-            log_info "[$HC_CREATE_LOGNAME] Файл ${ID_FILE} уже существует с ID: ${existing_id}"
-            log_info "[$HC_CREATE_LOGNAME] Создание чека пропущено"
-            return 0
-        else
-            log_info "[$HC_CREATE_LOGNAME] Файл ${ID_FILE} существует, но пуст. Удаляем его."
-            rm -f "${ID_FILE}"
-        fi
-    fi
-
-    log_info "[$HC_CREATE_LOGNAME] Файл ${ID_FILE} не найден. Создаём новый чек."
-
-    # Создание чека
-    if create_healthcheck \
-        "${HC_CREATE_NAME}" \
-        "${HC_CREATE_NAME}" \
-        "${HC_CREATE_TAGS}" \
-        "${HC_CREATE_DESCRIPTION}" \
-        "${HC_CREATE_TIMEOUT}" \
-        "${HC_CREATE_GRACE}" \
-        "${HC_CREATE_API_URL}" \
-        "${HC_CREATE_API_TOKEN}" \
-        "${HC_CREATE_CHANNELS}"; then
-        log_info "[$HC_CREATE_LOGNAME] Чек успешно создан"
-    else
-        log_error "[$HC_CREATE_LOGNAME] Не удалось создать чек"
-        return 1
-    fi
-}
-
-# Если скрипт запущен напрямую, а не подключен через source
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    create_healthcheck_main "$@"
-fi
