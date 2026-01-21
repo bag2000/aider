@@ -20,11 +20,11 @@ else
     exit 1 # Выход если файл не найден
 fi
 
-
 # Функция отправки start ping (начало выполнения задачи)
 hc_ping_start() {
+    local message="${1:-}"
     log_info "[$HC_PING_LOGNAME] Отправляю start ping в $HC_PING_URL/$uuid"
-    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X POST "$HC_PING_URL/$uuid/start")
+    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X POST --data-raw "${message}" "$HC_PING_URL/$uuid/start")
     if [ $response == "OK" ]; then
         log_info "[$HC_PING_LOGNAME] Start ping успешно отправлен"
         return 0
@@ -36,8 +36,9 @@ hc_ping_start() {
 
 # Функция отправки success ping (успешное завершение задачи)
 hc_ping_success() {
+    local message="${1:-}"
     log_info "[$HC_PING_LOGNAME] Отправляю succes ping в $HC_PING_URL/$uuid"
-    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X POST "$HC_PING_URL/$uuid")
+    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X --data-raw "${message}" POST "$HC_PING_URL/$uuid")
     if [ $response == "OK" ]; then
         log_info "[$HC_PING_LOGNAME] Succes ping успешно отправлен"
         return 0
@@ -49,8 +50,9 @@ hc_ping_success() {
 
 # Функция отправки fail ping (ошибка выполнения задачи)
 hc_ping_fail() {
+    local message="${1:-}"
     log_info "[$HC_PING_LOGNAME] Отправляю fail ping в $HC_PING_URL/$uuid"
-    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X POST "$HC_PING_URL/$uuid/fail")
+    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X POST --data-raw "${message}" "$HC_PING_URL/$uuid/fail")
     if [ $response == "OK" ]; then
         log_info "[$HC_PING_LOGNAME] Fail ping успешно отправлен"
         return 0
