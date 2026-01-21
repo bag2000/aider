@@ -13,6 +13,7 @@ day=$(date +%d)
 
 if [ "$day" -le 28 ]; then
     log_info "Начинаю проверку репозитория $RESTIC_REPO"
+    export RESTIC_PASSWORD
     systemd-run --scope \
     -p CPUQuota=100% \
     -p MemoryLimit=1G \
