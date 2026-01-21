@@ -16,18 +16,10 @@ restic_check() {
         log_info "[$RESTIC_CHECK_LOGNAME] Начинаю проверку репозитория $RESTIC_REPO"
         export RESTIC_PASSWORD
 
-        CMD="systemd-run --scope \
-        -p CPUQuota=100% \
-        -p MemoryLimit=1G \
-        -- restic \
-        check \
-        --read-data-subset $day/28 \
-        -o rest.connections=20 \
-        -r $RESTIC_REPO \
-        --cache-dir $RESTIC_CACHE_DIR"
+        CMD="systemd-run --scope -p CPUQuota=100% -p MemoryLimit=1G -- restic check --read-data-subset $day/28 -o rest.connections=20 -r $RESTIC_REPO --cache-dir $RESTIC_CACHE_DIR"
 
         log_info "[$RESTIC_CHECK_LOGNAME] Запускаю команду $CMD"
-        eval CMD &>> $LOG_PATH || {
+        eval $CMD &>> $LOG_PATH || {
             log_error "Ошибка при проверке репозитория $RESTIC_REPO"
             return 1
         }
