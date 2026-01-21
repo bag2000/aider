@@ -24,10 +24,10 @@ restic_check() {
             return 1
         }
     else
-        log_info "Текущее число $day больше 28. Пропускаю проверку. Слудующая проверка 1 числа."
+        log_info "[$RESTIC_CHECK_LOGNAME] Текущее число $day больше 28. Пропускаю проверку. Слудующая проверка 1 числа."
         return 0
     fi
 
-    log_info "Проверка репозитория $RESTIC_REPO завершена"
+    log_info "[$RESTIC_CHECK_LOGNAME] Проверка репозитория $RESTIC_REPO завершена"
     return 0
 }
