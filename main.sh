@@ -5,6 +5,7 @@ source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 source "${SCRIPT_DIR}/hc_create.sh" || { echo "Failed to load hc_create.sh"; exit 1; }
 source "${SCRIPT_DIR}/hc_ping.sh" || { echo "Failed to load hc_ping.sh"; exit 1; }
 
+log_info "*************************************************************************************"
 # Переменная для лога ошибок
 # В конце она отправляется в чек
 main_check=""
