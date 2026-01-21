@@ -47,7 +47,3 @@ Thumbs.db
 cache/
 *pycache*/
 *.pyc
-
-# Main
-main.sh
-hc_create_main.sh

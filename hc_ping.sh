@@ -38,7 +38,7 @@ hc_ping_start() {
 hc_ping_success() {
     local message="${1:-}"
     log_info "[$HC_PING_LOGNAME] Отправляю succes ping в $HC_PING_URL/$uuid"
-    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X --data-raw "${message}" POST "$HC_PING_URL/$uuid")
+    response=$(curl --resolve $HC_PING_DNS --max-time 10 -fs -X POST --data-raw "${message}" "$HC_PING_URL/$uuid")
     if [ $response == "OK" ]; then
         log_info "[$HC_PING_LOGNAME] Succes ping успешно отправлен"
         return 0
