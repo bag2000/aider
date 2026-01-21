@@ -21,7 +21,7 @@ hc_ping_start "Начало резервного копирования"
 # $SCRIPT_DIR/backup_postgres.sh "alldb" || main_check+="ОШИБКА postgres alldb "
 # $SCRIPT_DIR/backup_postgres.sh "namedb" || main_check+="ОШИБКА postgres navigator "
 
-$SCRIPT_DIR/restic_check.sh || main_check+="ОШИБКА restic check "
+restic_check || main_check+="ОШИБКА restic check "
 
 if [ -n "$main_check" ]; then
     hc_ping_success "Резервное копирование успешно завершено"
