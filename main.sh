@@ -4,6 +4,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 source "${SCRIPT_DIR}/hc_create.sh" || { echo "Failed to load hc_create.sh"; exit 1; }
 source "${SCRIPT_DIR}/hc_ping.sh" || { echo "Failed to load hc_ping.sh"; exit 1; }
+source "${SCRIPT_DIR}/restic_check.sh" || { echo "Failed to load restic_check.sh"; exit 1; }
 
 log_info "*************************************************************************************"
 # Переменная для лога ошибок
