@@ -7,6 +7,12 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
+# Установка LOG_PATH по умолчанию, если не определён
+: "${LOG_PATH:=/tmp/backup_postgres.log}"
+
+# Установка LOG_PATH по умолчанию, если не определён
+: "${LOG_PATH:=/tmp/backup_postgres.log}"
+
 # Функция для вывода справки
 show_help() {
     cat << EOF
@@ -44,7 +50,8 @@ if [[ "${TARGET}" == "alldb" ]]; then
     log_info "[$BACKUP_POSTGRES_LOGNAME] Начинаю бекап всех баз данных в ${BACKUP_FILE}"
     
     # Выполнение pg_dumpall
-    if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" pg_dumpall) | gzip > "${BACKUP_FILE}"; then
+    log_info "[$BACKUP_POSTGRES_LOGNAME] Запуск pg_dumpall, вывод stderr будет записан в ${LOG_PATH:-/tmp/backup_postgres.log}"
+    if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" pg_dumpall 2>>"${LOG_PATH:-/tmp/backup_postgres.log}") | gzip > "${BACKUP_FILE}"; then
         log_success "[$BACKUP_POSTGRES_LOGNAME] Бекап всех баз успешно создан"
     else
         log_error "[$BACKUP_POSTGRES_LOGNAME] Ошибка при создании бекапа всех баз"
@@ -58,7 +65,8 @@ else
     
     # Проверка существования базы данных (опционально)
     # Выполнение pg_dump
-    if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" pg_dump "${DB_NAME}") | gzip > "${BACKUP_FILE}"; then
+    log_info "[$BACKUP_POSTGRES_LOGNAME] Запуск pg_dump для базы ${DB_NAME}, вывод stderr будет записан в ${LOG_PATH:-/tmp/backup_postgres.log}"
+    if (cd /tmp && sudo -u "${BACKUP_POSTGRES_USER}" pg_dump "${DB_NAME}" 2>>"${LOG_PATH:-/tmp/backup_postgres.log}") | gzip > "${BACKUP_FILE}"; then
         log_success "[$BACKUP_POSTGRES_LOGNAME] Бекап базы '${DB_NAME}' успешно создан"
     else
         log_error "[$BACKUP_POSTGRES_LOGNAME] Ошибка при создании бекапа базы '${DB_NAME}'"
