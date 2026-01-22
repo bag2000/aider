@@ -17,6 +17,8 @@ restic_check() {
 
     if [ "$day" -le 28 ]; then
         log_info "[$RESTIC_CHECK_LOGNAME] Начинаю проверку репозитория $RESTIC_REPO"
+
+        # Экспортируем пароль, иначе restic будет пытаться запросить его в терминале
         export RESTIC_PASSWORD
 
         CMD="systemd-run --scope -p CPUQuota=100% -p MemoryLimit=1G -- restic check --read-data-subset $day/28 -o rest.connections=20 -r $RESTIC_REPO --cache-dir $RESTIC_CACHE_DIR"

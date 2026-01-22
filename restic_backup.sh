@@ -15,7 +15,9 @@ restic_backup() {
         return 1
     }
 
+    # Экспортируем пароль, иначе restic будет пытаться запросить его в терминале
     export RESTIC_PASSWORD
+    
     # Формируем команду backup с ограничением ресурсов
     CMD="systemd-run --scope -p CPUQuota=100% -p MemoryLimit=1G -- restic backup ${RESTIC_BACKUP_PATHS} -r ${RESTIC_REPO} --cache-dir ${RESTIC_CACHE_DIR} --pack-size 128 --exclude-caches -x --tag="$(hostname)" --tag="root""
     

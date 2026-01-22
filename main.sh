@@ -19,12 +19,11 @@ hc_create
 hc_ping_start "Начало резервного копирования"
 
 # Создать дамп progress
-# $SCRIPT_DIR/backup_postgres.sh "alldb" || main_check+="ОШИБКА postgres alldb "
-# $SCRIPT_DIR/backup_postgres.sh "namedb" || main_check+="ОШИБКА postgres navigator "
+# $SCRIPT_DIR/backup_postgres.sh "alldb" || main_check+="ОШИБКА postgres alldb "            # Все базы
+# $SCRIPT_DIR/backup_postgres.sh "navigator" || main_check+="ОШИБКА postgres navigator "    № Конкретная база
 
 # restic_check || main_check+="ОШИБКА restic check "
-
-restic_backup || main_check+="ОШИБКА restic backup "
+# restic_backup || main_check+="ОШИБКА restic backup "
 
 if [ -z "$main_check" ]; then
     hc_ping_success "Резервное копирование успешно завершено"
