@@ -3,7 +3,8 @@
 # Путь к текущему каталогу скрипта (для относительных путей)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Подключаем функции логирования
+# Загружаем конфигурацию и функции логирования
+source "${SCRIPT_DIR}/.env" || { echo "Failed to load .env"; exit 1; }
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
 # Имя, которое будет использовано в записях лога

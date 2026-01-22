@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-source ./.env
-
 set -Eeuo pipefail
 
 # Загрузка библиотеки логирования
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Загружаем конфигурацию и функции логирования
+source "${SCRIPT_DIR}/.env" || { echo "Failed to load .env"; exit 1; }
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
 # Установка LOG_PATH по умолчанию, если не определён
