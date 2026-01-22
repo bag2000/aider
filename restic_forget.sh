@@ -10,7 +10,7 @@ source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 RESTIC_FORGET_LOGNAME="RESTIC_FORGET"
 
 restic_forget() {
-    log_info "[$RESTIC_FORGET_LOGNAME] Создание каталога кэша (если требуется)"
+    log_info "[$RESTIC_FORGET_LOGNAME] Создание каталога кэша"
     sudo mkdir -p "${RESTIC_CACHE_DIR}" || {
         log_error "[$RESTIC_FORGET_LOGNAME] Не удалось создать каталог кэша ${RESTIC_CACHE_DIR}"
         exit 1

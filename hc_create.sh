@@ -7,6 +7,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/.env" || { echo "Failed to load .env"; exit 1; }
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
+# Генерирую уникальный uuid
+# Необходим для проверки уникальности чека. На случай дублирования.
+# У каждого чека будет свой uuid дописанный в description
+uuid_system=$(cat /proc/sys/kernel/random/uuid)
+
 hc_create() {
     # Формирование JSON данных для запроса
     json_data=$(cat <<EOF
@@ -14,11 +19,10 @@ hc_create() {
     "name": "${HC_CREATE_NAME}",
     "slug": "${HC_CREATE_NAME}",
     "tags": "${HC_CREATE_TAGS}",
-    "desc": "${HC_CREATE_DESC}",
+    "desc": "${HC_CREATE_DESC}\n SYSTEM UUID: $uuid_system. Находится в $SCRIPT_DIR/.uuid_system",
     "timeout": ${HC_CREATE_TIMEOUT},
     "grace": ${HC_CREATE_GRACE},
-    "channels": "${HC_CREATE_CHANNELS}",
-    "unique" : ${HC_CREATE_UNIQUE}
+    "channels": "${HC_CREATE_CHANNELS}"
 }
 EOF
     )
@@ -61,6 +65,7 @@ EOF
     
     # Сохранение UUID в файл для последующего использования
     echo "$uuid" > "$ID_FILE_PATH"
+    echo "$uuid_system" > $SCRIPT_DIR/.uuid_system
     log_info "[$HC_CREATE_LOGNAME] Чек создан, UUID сохранен: $uuid"
     
     return 0
