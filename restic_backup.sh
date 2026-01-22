@@ -3,7 +3,8 @@
 # Определяем директорию скрипта (для относительных путей)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Подключаем общие функции логирования
+# Загружаем конфигурацию и функции логирования
+source "${SCRIPT_DIR}/.env" || { echo "Failed to load .env"; exit 1; }
 source "${SCRIPT_DIR}/log.sh" || { echo "Failed to load log.sh"; exit 1; }
 
 restic_backup() {
@@ -27,17 +28,3 @@ restic_backup() {
     log_success "[$RESTIC_BACKUP_LOGNAME] Резервное копирование завершено успешно"
     return 0
 }
-
-# ---------------------- MAIN ----------------------
-log_info "[$RESTIC_BACKUP_LOGNAME] Старт скрипта backup_restic.sh"
-
-restic_backup
-EXIT_CODE=$?
-
-if [ $EXIT_CODE -ne 0 ]; then
-    log_error "[$RESTIC_BACKUP_LOGNAME] Скрипт завершён с ошибкой (code=${EXIT_CODE})"
-else
-    log_info "[$RESTIC_BACKUP_LOGNAME] Скрипт завершён успешно"
-fi
-
-exit $EXIT_CODE
