@@ -15,7 +15,7 @@ restic_backup() {
     }
 
     # Формируем команду backup с ограничением ресурсов
-    CMD="systemd-run --scope -p CPUQuota=100% -p MemoryLimit=1G -- restic backup ${BACKUP_PATHS} -r ${RESTIC_REPO} --cache-dir ${RESTIC_CACHE_DIR} --pack-size 128 --exclude-caches -x --tag="$(hostname)" --tag="root""
+    CMD="systemd-run --scope -p CPUQuota=100% -p MemoryLimit=1G -- restic backup ${RESTIC_BACKUP_PATHS} -r ${RESTIC_REPO} --cache-dir ${RESTIC_CACHE_DIR} --pack-size 128 --exclude-caches -x --tag="$(hostname)" --tag="root""
     
     log_info "[$RESTIC_BACKUP_LOGNAME] Запускаю резервное копирование: $CMD"
     eval $CMD &>> "$LOG_PATH" || {
